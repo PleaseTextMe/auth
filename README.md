@@ -14,7 +14,6 @@ The entire project is dockerized and can be launched with a single click using D
 Make sure you have a `.env` file in the root of this directory. It should contain at least:
 ```env
 POSTGRES_PASSWORD=secret
-SALT=U_AXELA_HUY_666_SM
 # (Add any other necessary secrets for your JWT config here if needed later)
 ```
 
