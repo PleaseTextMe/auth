@@ -2,162 +2,83 @@ import logging
 from typing import Annotated
 
 from dishka.integrations.fastapi import FromDishka, inject
-from fastapi import Depends, HTTPException, Request, Response, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi import Depends, HTTPException, Request, status
+from fastapi.security import APIKeyHeader
 
-from src.core.config import settings
-from src.domain.entities.token import Token
+from src.core.utils.hash import hash_token
+from src.domain.entities.session import Session
 from src.domain.entities.user import User
-from src.domain.exceptions import (
-    Forbidden,
-    SessionHasExpired,
-    UserNotFound,
-)
-from src.services.blacklist import IBlacklistService
-from src.services.jwt import IJWTService
-from src.services.user import IUserService
-
-auth_scheme = HTTPBearer(auto_error=False)
+from src.services.interfaces.uow import IUnitOfWork
 
 logger = logging.getLogger(__name__)
 
-
-def set_refresh_token(response: Response, refresh_token: str) -> None:
-    """
-    Устанавливает refresh-токен в cookies ответа.
-    """
-    response.set_cookie(
-        key="refresh_token",
-        value=refresh_token,
-        httponly=True,
-        secure=not settings.service.debug,
-        samesite="Strict",
-        max_age=settings.service.refresh_token_expire,
-    )
-
-
-def get_refresh_token(request: Request) -> str:
-    """
-    Извлекает refresh-токен из cookies.
-    """
-    refresh_token = request.cookies.get("refresh_token")
-    if not refresh_token:
-        logger.warning("Refresh токен не обнаружен в cookies")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, 
-            detail="Refresh токен не обнаружен"
-        )
-    request.state.refresh_token = refresh_token
-    return refresh_token
+auth_scheme = APIKeyHeader(name="x-auth-token", auto_error=False)
 
 
 @inject
-async def get_refresh_token_data(
-    request: Request,
-    jwt_service: FromDishka[IJWTService],
-    refresh_token: str = Depends(get_refresh_token),
-) -> Token:
+async def get_current_session(
+    uow: FromDishka[IUnitOfWork],
+    auth_token: str | None = Depends(auth_scheme),
+) -> Session:
     """
-    Декодирует refresh-токен и сохраняет его данные.
+    Извлекает токен, хеширует его и проверяет статус сессии в БД.
     """
-    try:
-        payload: Token = jwt_service.decode_token(refresh_token)
-        request.state.payload = payload
-        return payload
-    except Exception as e:
-        if isinstance(e, SessionHasExpired):
-            raise
+    if not auth_token:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Неверный токен"
-        ) from e
+            status_code=status.HTTP_401_UNAUTHORIZED, 
+            detail="Необходимо авторизоваться"
+        )
+
+    token_hash = hash_token(auth_token)
+
+    async with uow as current_uow:
+        session = await current_uow.session_repository.get_by_hash(token_hash)
+
+        if not session:
+            logger.warning("Попытка входа с несуществующим токеном")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, 
+                detail="Сессия не найдена или недействительна"
+            )
+
+        if not session.is_active:
+            logger.info(f"Попытка использования деактивированной сессии: {session.id}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, 
+                detail="Сессия завершена"
+            )
+
+        return session
 
 
 @inject
 async def get_current_user(
-    user_repository: FromDishka[IUserService],
-    payload: Token = Depends(get_refresh_token_data),
+    request: Request,
+    uow: FromDishka[IUnitOfWork],
+    session: Session = Depends(get_current_session),
 ) -> User:
     """
-    Получает пользователя из базы по ID из refresh-токена.
+    Получает пользователя по активной сессии и проверяет его статус.
     """
-    user: User | None = await user_repository.get_by_id(payload.user_id)
-    if not user:
-        logger.error(f"Ошибка при получении пользователя с id {payload.user_id} из БД")
-        raise UserNotFound()
-    return user
+    async with uow as current_uow:
+        user = await current_uow.user_repository.get_by_id(session.user_id)
 
-
-@inject
-async def get_access_token_data(
-    request: Request,
-    jwt_service: FromDishka[IJWTService],
-    credentials: HTTPAuthorizationCredentials = Depends(auth_scheme),
-) -> Token:
-    """
-    Извлекает и декодирует access-токен.
-    """
-    if credentials is None or not credentials.credentials:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Необходимо авторизоваться"
-        )
-    
-    access_token = credentials.credentials
-    try:
-        payload: Token = jwt_service.decode_token(access_token)
-        request.state.access_token_payload = payload
-        return payload
-    except Exception as e:
-        if isinstance(e, SessionHasExpired):
-            raise
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Неверный токен"
-        ) from e
-
-
-def require_permissions(required_permissions: list[str] | None = None):
-    """
-    Фабрика зависимостей для проверки прав на основе access-токена.
-    """
-
-    @inject
-    async def check_permission(
-        request: Request,
-        jwt_service: FromDishka[IJWTService],
-        blacklist_service: FromDishka[IBlacklistService],
-        credentials: HTTPAuthorizationCredentials = Depends(auth_scheme),
-    ) -> Token:
-        logger.debug("Проверяем access-токен и права доступа...")
-        
-        if credentials is None or not credentials.credentials:
+        if not user:
+            logger.error(f"Сессия {session.id} ссылается на удаленного пользователя {session.user_id}")
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail="Необходимо авторизоваться"
+                status_code=status.HTTP_401_UNAUTHORIZED, 
+                detail="Пользователь не найден"
             )
 
-        access_token = credentials.credentials
-
-        try:
-            payload: Token = jwt_service.decode_token(access_token)
-
-            # Проверка токена в черном списке
-            if await blacklist_service.is_exists(payload.jti):
-                raise SessionHasExpired()
-
-            # Проверка необходимых прав
-            if required_permissions and not set(required_permissions).issubset(set(payload.scope)):
-                raise Forbidden()
-
-            request.state.user = payload.user_id
-            return payload
-
-        except Exception as e:
-            if isinstance(e, (SessionHasExpired, Forbidden)):
-                raise
+        if getattr(user, "is_active", True) is False:
+            logger.warning(f"Заблокированный пользователь {user.id} пытается получить доступ")
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail="Неверный токен"
-            ) from e
+                status_code=status.HTTP_403_FORBIDDEN, 
+                detail="Аккаунт заблокирован"
+            )
 
-    return check_permission
+        return user
 
 
+CurrentSessionDep = Annotated[Session, Depends(get_current_session)]
 CurrentUserDep = Annotated[User, Depends(get_current_user)]
-AccessTokenDep = Annotated[Token, Depends(get_access_token_data)]

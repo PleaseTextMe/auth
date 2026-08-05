@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
 
 # from src.services.interfaces.producer import IProducer
-
-from src.services.interfaces.repositories.blacklist import IBlacklistRepository
+from src.services.interfaces.repositories.session import ISessionRepository
 from src.services.interfaces.repositories.user import IUserRepository
+from src.services.interfaces.repositories.verify import IVerifyRepository
+
 # from src.services.interfaces.repositories.event import IEventRepository
 # from src.services.interfaces.repositories.subscription import ISubscriptionRepository
 # from src.services.interfaces.repositories.feedback import IFeedbackRepository
@@ -37,11 +38,15 @@ class IUnitOfWork(ABC):
 
     @property
     @abstractmethod
-    def blacklist_repository(self) -> IBlacklistRepository: ...
+    def session_repository(self) -> ISessionRepository: ...
 
     @property
     @abstractmethod
     def user_repository(self) -> IUserRepository: ...
+
+    @property
+    @abstractmethod
+    def verify_repository(self) -> IVerifyRepository: ...
 
     # @property
     # @abstractmethod

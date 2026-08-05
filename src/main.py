@@ -7,8 +7,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from src.api.v1.router import router
 from src.infrastructure.container import Container
-from src.infrastructure.lifetime import AppLifetime
 from src.infrastructure.handlers.exceptions import exception_handlers
+from src.infrastructure.lifetime import AppLifetime
 
 
 @asynccontextmanager

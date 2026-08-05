@@ -1,3 +1,3 @@
 from redis.asyncio import Redis
 
-client: Redis | None = None
+redis_client: Redis | None = None

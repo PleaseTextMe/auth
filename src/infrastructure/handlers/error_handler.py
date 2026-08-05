@@ -8,8 +8,11 @@ EXC_MAP: dict[type[Exception], tuple[int, str]] = {
     domain_exc.Forbidden: (403, "FORBIDDEN"),
     domain_exc.SessionHasExpired: (401, "SESSION_EXPIRED"),
     domain_exc.UserNotFound: (404, "USER_NOT_FOUND"),
-    domain_exc.PasswordsNotMatch: (400, "PASSWORDS_NOT_MATCH"),
-    domain_exc.UserAlreadyExists: (409, "USER_ALREADY_EXISTS"),
+    domain_exc.UserEmailAlreadyExists: (409, "USER_ALREADY_EXISTS"),
+    domain_exc.UsernameAlreadyExists: (409, "USER_ALREADY_EXISTS"),
+    domain_exc.InvalidVerifyCode: (400, "INVALID_VERIFY_CODE"),
+    domain_exc.VerifyCodeNotConfirmed: (400, "VERIFY_CODE_NOT_CONFIRMED"),
+    domain_exc.CodeHasExpired: (400, "CODE_HAS_EXPIRED"),
 }
 
 def _make_handler(status_code: int, code: str):

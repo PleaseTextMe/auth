@@ -1,23 +1,46 @@
-from typing import Annotated
+from pydantic import BaseModel, EmailStr
 
-from fastapi import Form
-from pydantic import BaseModel, EmailStr, Field
+
+class PublicBundleSchema(BaseModel):
+    bundle_json: str
+    signature: str
+
+
+class VaultSchema(BaseModel):
+    encrypted_payload: str
+    nonce: str
+    auth_tag: str
 
 
 class LoginForm(BaseModel):
-    email: Annotated[EmailStr, Form(...)]
-    password: Annotated[str, Form(...)]
+    email: EmailStr
+    password: str
 
 
 class RegisterForm(LoginForm):
-    username: Annotated[str, Form(...)]
+    username: str
+    verify_token: str
+    public_bundle: PublicBundleSchema
+    vault: VaultSchema
 
 
-class GetSaltResponseSchema(BaseModel):
-    kdf_salt: str
+class SendCodeForm(BaseModel):
+    email: EmailStr
+
+
+class CheckCodeForm(BaseModel):
+    email: EmailStr
+    code: int
+    verify_token: str
 
 
 class LoginResponse(BaseModel):
-    refresh_token: str
-    access_token: str
-    token_type: str = Field(default="jwt")
+    auth_token: str
+
+
+class SendCodeResponse(BaseModel):
+    verify_token: str
+
+
+class CheckVerifyCodeResponse(BaseModel):
+    is_verified: bool

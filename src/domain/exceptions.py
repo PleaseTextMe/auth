@@ -19,12 +19,27 @@ class UserNotFound(DomainException):
     def message(self) -> str:
         return "Пользователь не найден"
 
-class PasswordsNotMatch(DomainException):
-    @property
-    def message(self) -> str:
-        return "Введенные пароли не совпадают"
-
-class UserAlreadyExists(DomainException):
+class UserEmailAlreadyExists(DomainException):
     @property
     def message(self) -> str:
         return "Пользователь с таким email или именем уже существует"
+
+class UsernameAlreadyExists(DomainException):
+    @property
+    def message(self) -> str:
+        return "Пользователь с таким email или именем уже существует"
+
+class InvalidVerifyCode(DomainException):
+    @property
+    def message(self) -> str:
+        return "Неверный код"
+
+class VerifyCodeNotConfirmed(DomainException):
+    @property
+    def message(self) -> str:
+        return "Проверочный код не подтвержден"
+
+class CodeHasExpired(DomainException):
+    @property
+    def message(self) -> str:
+        return "Код был просрочен"

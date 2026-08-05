@@ -1,20 +1,24 @@
 import logging
 
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
-from fastapi import APIRouter, Depends, Request, Response, status
+from fastapi import APIRouter, Request, status
 
+from src.api.v1.depends import CurrentSessionDep, CurrentUserDep
 from src.api.v1.schemas.auth import (
-    GetSaltResponseSchema,
+    CheckCodeForm,
+    CheckVerifyCodeResponse,
     LoginForm,
     LoginResponse,
     RegisterForm,
+    SendCodeForm,
+    SendCodeResponse,
 )
-
-# from src.api.v1.depends import CurrentUserDep
-from src.domain.exceptions import PasswordsNotMatch
+from src.domain.dtos.session import SessionCreateDTO
+from src.domain.dtos.user import UserCreateDTO
+from src.domain.dtos.verify import VerifyCodeDTO
+from src.services.session import ISessionService
 from src.services.user import IUserService
-
-# from src.domain.dtos.address import AddressCreateDTO, AddressUpdateDTO
+from src.services.verify import IVerifyService
 
 logger = logging.getLogger(__name__)
 
@@ -25,125 +29,105 @@ router = APIRouter(
 )
 
 
-@router.get(
-    "/salt",
-    summary="Get the user salt.",
-    response_model=GetSaltResponseSchema,
-)
-async def get_salt(
-    email: str,
-    user_service: FromDishka[IUserService],
-):
-    user_salt = await user_service.get_salt_by_email(email)
-    return GetSaltResponseSchema(**user_salt.model_dump())
-
-
 @router.post(
     "/register/",
+    summary="Регистрация нового пользователя.",
     response_model=LoginResponse,
     status_code=status.HTTP_201_CREATED,
 )
 async def register(
-    register_form: RegisterForm,
     request: Request,
-    response: Response,
-    auth_service: AuthDep,
-    jwt_service: JWTDep,
-    session_service: SessionDep,
+    register_form: RegisterForm,
+    user_service: FromDishka[IUserService],
+    session_service: FromDishka[ISessionService],
 ) -> LoginResponse:
-    if register_form.password != register_form.confirm_password:
-        raise PasswordsNotMatch
-    user = await auth_service.registration_new_user(
-        register_form.username, register_form.email,
-        register_form.password
+    await user_service.create(
+        UserCreateDTO(**register_form.model_dump())
     )
-    access_token = jwt_service.generate_access_token(user)
-    refresh_token = jwt_service.generate_refresh_token(user)
-    session = SessionFactory.create(
-        user_id=user.id,
-        jti=jwt_service.jti,
-        user_agent=request.headers["user-agent"],
-        refresh_token=refresh_token,
-        user_ip=request.headers["host"],
+    auth_token = await session_service.create(
+        SessionCreateDTO(
+            **register_form.model_dump(),
+            user_agent=request.headers["user-agent"],
+            user_ip=request.headers["host"],
+        )
     )
-    await session_service.create_new_session(session=session)
-    set_refresh_token(response=response, refresh_token=refresh_token)
-    return LoginResponse(access_token=access_token, refresh_token=refresh_token)
+    return LoginResponse(auth_token=auth_token)
 
 
 @router.post(
     "/login/",
     response_model=LoginResponse,
-    status_code=status.HTTP_201_CREATED,
+    status_code=status.HTTP_200_OK,
 )
 async def login(
     request: Request,
-    response: Response,
     login_form: LoginForm,
-    auth_service: AuthDep,
-    jwt_service: JWTDep,
-    session_service: SessionDep,
+    session_service: FromDishka[ISessionService],
 ) -> LoginResponse:
-    user = await auth_service.login_user(
-        email=login_form.email, password=login_form.password
+    auth_token = await session_service.create(
+        SessionCreateDTO(
+            **login_form.model_dump(),
+            user_agent=request.headers["user-agent"],
+            user_ip=request.headers["host"],
+        )
     )
-    access_token = jwt_service.generate_access_token(user)
-    refresh_token = jwt_service.generate_refresh_token(user)
-    session = SessionFactory.create(
-        user_id=user.id,
-        jti=jwt_service.jti,
-        user_agent=request.headers["user-agent"],
-        refresh_token=refresh_token,
-        user_ip=request.headers["host"],
-    )
-    await session_service.create_new_session(session=session)
-    set_refresh_token(response=response, refresh_token=refresh_token)
-    return LoginResponse(access_token=access_token, refresh_token=refresh_token)
-
-
-@router.post("/logout/", status_code=status.HTTP_204_NO_CONTENT)
-async def logout(
-    session_service: SessionDep,
-    blacklist_service: BlacklistDep,
-    refresh_token: str = Depends(get_refresh_token),
-):
-    deactivate_session = await session_service.deactivate_current_session(refresh_token)
-    await blacklist_service.set_one_value(
-        deactivate_session.jti,
-        deactivate_session.user_id,
-        settings.service.access_token_expire,
-    )
-    return
+    return LoginResponse(auth_token=auth_token)
 
 
 @router.post(
-    "/refresh/", response_model=LoginResponse, status_code=status.HTTP_200_OK
+    "/send-verify-code/",
+    response_model=SendCodeResponse,
+    status_code=status.HTTP_200_OK,
 )
-async def refresh(
-    response: Response,
-    session_service: SessionDep,
-    jwt_service: JWTDep,
-    refresh_token: str = Depends(get_refresh_token),
-    current_user: User = Depends(get_current_user),
-) -> LoginResponse:
-    new_refresh_token = jwt_service.generate_refresh_token(user=current_user)
-    new_access_token = jwt_service.generate_access_token(user=current_user)
-    new_jti = jwt_service.jti
-    _ = await session_service.update_session_refresh_token(
-        refresh_token, new_refresh_token, new_jti
+async def send_verify_code(
+    send_code_form: SendCodeForm,
+    verify_service: FromDishka[IVerifyService],
+) -> SendCodeResponse:
+    verify_token = await verify_service.create_email_code(
+        send_code_form.email
     )
-    set_refresh_token(response=response, refresh_token=new_refresh_token)
-    return LoginResponse(access_token=new_access_token, refresh_token=new_refresh_token)
+    return SendCodeResponse(verify_token=verify_token)
 
-# @router.get(
-#     "/{address_id}",
-#     summary="Получить данные об адресе",
-#     response_model=AddressResponseSchema,
-# )
-# async def get_address(
-#     address_service: FromDishka[IAddressService], address_id: UUID, user: CurrentUserDep
-# ):
-#     address = await address_service.get_address_by_id(
-#         address_id=address_id, user_id=user.id
-#     )
-#     return AddressResponseSchema(**address.model_dump())
+
+@router.post(
+    "/check-verify-code/",
+    response_model=CheckVerifyCodeResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def check_verify_code(
+    check_code_form: CheckCodeForm,
+    verify_service: FromDishka[IVerifyService],
+) -> CheckVerifyCodeResponse:
+    await verify_service.verify_email_code(
+        VerifyCodeDTO(**check_code_form.model_dump())
+    )
+    return CheckVerifyCodeResponse(is_verified=True)
+
+
+@router.post(
+    "/logout/",
+    status_code=status.HTTP_204_NO_CONTENT
+)
+async def logout(
+    session_service: FromDishka[ISessionService],
+    session: CurrentSessionDep
+):
+    await session_service.logout(session.auth_token_hash)
+
+
+@router.get(
+    "/me/"
+)
+async def get_me(
+    user: CurrentUserDep
+):
+    return user
+
+
+@router.get(
+    "/my-session/"
+)
+async def get_my_session_info(
+    session: CurrentSessionDep
+):
+    return session

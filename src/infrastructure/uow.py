@@ -1,43 +1,29 @@
+from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.infrastructure.db import redis
-from src.infrastructure.repositories.blacklist import RedisBlacklistRepository
-
-# from src.services.interfaces.repositories.feedback import IFeedbackRepository
+from src.infrastructure.repositories.session import SQLAlchemySessionRepository
 from src.infrastructure.repositories.user import SQLAlchemyUserRepository
-from src.services.interfaces.repositories.blacklist import IBlacklistRepository
+from src.infrastructure.repositories.verify import RedisVerifyRepository
+from src.services.interfaces.repositories.session import ISessionRepository
 from src.services.interfaces.repositories.user import IUserRepository
-
-# from src.infrastructure.repositories.events import SQLAlchemyEventRepository
-# from src.infrastructure.repositories.reservations import SQLAlchemyReservationRepository
-# from src.infrastructure.repositories.subscriptions import (
-#     SQLAlchemySubscriptionRepository,
-# )
-# from src.services.interfaces.producer import IProducer
-# from src.services.interfaces.repositories.event import IEventRepository
-# from src.services.interfaces.repositories.reservation import IReservationRepository
-# from src.services.interfaces.repositories.subscription import ISubscriptionRepository
+from src.services.interfaces.repositories.verify import IVerifyRepository
 from src.services.interfaces.uow import IUnitOfWork
 
-# from src.infrastructure.repositories.event_feedbacks import (
-#     SQLAlchemyEventFeedbackRepository,
-#     IEventFeedbackRepository,
-# )
-# from src.infrastructure.repositories.user_feedbacks import (
-#     SQLAlchemyUserFeedbackRepository,
-# )
+# from src.services.interfaces.producer import IProducer
 
 
-class SQLAlchemyUnitOfWork(IUnitOfWork):
+class DatabaseUnitOfWork(IUnitOfWork):
     def __init__(
             self,
             session: AsyncSession,
+            redis: Redis,
             # producer: IProducer
         ):
         self.session = session
+        self.redis = redis
         # self._producer = producer
 
-    async def __aenter__(self) -> "SQLAlchemyUnitOfWork":
+    async def __aenter__(self) -> "DatabaseUnitOfWork":
         return self
 
     async def __aexit__(self, exc_type, exc_value, traceback) -> None:
@@ -59,32 +45,14 @@ class SQLAlchemyUnitOfWork(IUnitOfWork):
     #     return self._producer
 
 
-    # @property
-    # def subscription_repository(self) -> ISubscriptionRepository:
-    #     return SQLAlchemySubscriptionRepository(self.session)
-
-    # @property
-    # def event_repository(self) -> IEventRepository:
-    #     return SQLAlchemyEventRepository(self.session)
-
-    # @property
-    # def reservation_repository(self) -> IReservationRepository:
-    #     return SQLAlchemyReservationRepository(self.session)
-
     @property
     def user_repository(self) -> IUserRepository:
         return SQLAlchemyUserRepository(self.session)
 
     @property
-    def blacklist_repository(self) -> IBlacklistRepository:
-        if redis.client is None:
-            raise RuntimeError("Redis is not initialized")
-        return RedisBlacklistRepository(redis.client)
+    def session_repository(self) -> ISessionRepository:
+        return SQLAlchemySessionRepository(self.session)
 
-    # @property
-    # def event_feedback_repository(self) -> IEventFeedbackRepository:
-    #     return SQLAlchemyEventFeedbackRepository(self.session)
-
-    # @property
-    # def user_feedback_repository(self) -> IFeedbackRepository:
-    #     return SQLAlchemyUserFeedbackRepository(self.session)
+    @property
+    def verify_repository(self) -> IVerifyRepository:
+        return RedisVerifyRepository(self.redis)

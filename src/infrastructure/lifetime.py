@@ -1,12 +1,12 @@
 import logging
 
+from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import clear_mappers
 
 from src.core.config import settings
 from src.infrastructure.db import postgres, redis
 from src.infrastructure.models import start_mappers
-from redis.asyncio import Redis
 from src.interfaces.lifetime import AbstractAppLifetime
 
 logger = logging.getLogger(__name__)
@@ -55,15 +55,15 @@ class AppLifetime(AbstractAppLifetime):
         logger.info("Отключение от Postgres")
 
     async def _connect_to_redis(self) -> None:
-        redis.client = Redis.from_url(settings.redis.url)
+        redis.redis_client = Redis.from_url(settings.redis.url)
         try:
-            await redis.client.ping()
+            await redis.redis_client.ping()
             logger.info("✅ Соединение с Redis успешно установлено")
         except Exception as e:
             logger.error("❌ Ошибка при соединении с Redis %s: %s", settings.redis.url, e)
             raise e
 
     async def _disconnect_from_redis(self) -> None:
-        if redis.client is not None:
-            await redis.client.close()
+        if redis.redis_client is not None:
+            await redis.redis_client.close()
             logger.info("Отключение от Redis")

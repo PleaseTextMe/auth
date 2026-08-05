@@ -1,13 +1,13 @@
 import logging
-from collections.abc import Iterable
-from uuid import UUID
 
+from pydantic import EmailStr
 from sqlalchemy import Result, insert, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-# from src.domain.dtos.address import AddressCreateDTO, AddressUpdateDTO
-from src.domain.entities.user import User, UserSalt
-# from src.infrastructure.repositories.exceptions import NotModifiedError
+from src.domain.dtos.user import (
+    UserCreateDatabaseDTO,
+)
+from src.domain.entities.user import User
 from src.services.interfaces.repositories.user import IUserRepository
 
 logger = logging.getLogger(__name__)
@@ -16,6 +16,31 @@ logger = logging.getLogger(__name__)
 class SQLAlchemyUserRepository(IUserRepository):
     def __init__(self, session: AsyncSession):
         self._session: AsyncSession = session
+
+    async def create(self, user_data: UserCreateDatabaseDTO) -> User:
+        insert_data = user_data.model_dump()
+        query = insert(User).values(insert_data).returning(User)
+        result: Result = await self._session.execute(query)
+        db_user = result.unique().scalar_one()
+        return User.model_validate(db_user)
+
+    async def get_by_email(self, user_email: EmailStr) -> User | None:
+        query = select(User).filter_by(email=user_email)
+        result: Result = await self._session.execute(query)
+        db_user = result.scalar_one_or_none()
+        return User.model_validate(db_user) if db_user else None
+
+    async def get_by_username(self, username: str) -> User | None:
+        query = select(User).filter_by(username=username)
+        result: Result = await self._session.execute(query)
+        db_user = result.scalar_one_or_none()
+        return User.model_validate(db_user) if db_user else None
+
+    async def get_by_id(self, user_id: int) -> User | None:
+        query = select(User).filter_by(id=user_id)
+        result: Result = await self._session.execute(query)
+        db_user = result.scalar_one_or_none()
+        return User.model_validate(db_user) if db_user else None
 
     # async def create(self, address: AddressCreateDTO) -> Address:
     #     insert_data = address.model_dump()
@@ -34,12 +59,6 @@ class SQLAlchemyUserRepository(IUserRepository):
     #         logger.warning("Address с id=%s не найден.", address_id)
     #         return None
     #     return address
-
-    async def get_salt(self, user_email: str) -> UserSalt | None:
-        query = select(User).filter_by(email=user_email)
-        result: Result = await self._session.execute(query)
-        user = result.scalar_one_or_none()
-        return UserSalt.model_validate(user) if user else None
 
     # async def delete(self, address_id: UUID) -> Address | None:
     #     query = select(Address).filter_by(id=address_id)

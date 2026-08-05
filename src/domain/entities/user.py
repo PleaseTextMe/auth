@@ -5,36 +5,33 @@ from src.domain.entities.mixins import DateTimeMixin
 
 
 class User(DateTimeMixin, BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int = Field(default_factory=generate_snowflake_id)
     username: str
     email: EmailStr
-    auth_hash: str
+    password_hash: bytes = Field(exclude=True, repr=False)
+    public_bundle: dict
+    vault: dict
     is_active: bool
-    roles: list = Field(default_factory=list)
-    kdf_salt: str
 
     @classmethod
     def create(
         cls,
         username: str,
         email: EmailStr,
-        auth_hash: str,
-        is_active: bool,
-        roles: list,
-        kdf_salt: str,
+        password_hash: str,
+        public_bundle: dict,
+        vault: dict,
+        is_active: bool = True,
+        **kwargs,
     ) -> "User":
         return cls(
             id=generate_snowflake_id(),
             username=username,
             email=email,
-            auth_hash=auth_hash,
+            password_hash=password_hash,
+            public_bundle=public_bundle,
+            vault=vault,
             is_active=is_active,
-            roles=roles,
-            kdf_salt=kdf_salt,
         )
-
-
-class UserSalt(BaseModel):
-    kdf_salt: str
-
-    model_config = ConfigDict(from_attributes=True)

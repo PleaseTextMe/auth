@@ -22,11 +22,6 @@ class ServiceSettings(ModelConfig):
     project_name: str = Field(default="auth", validation_alias="PROJECT_NAME")
     worker_id: int = Field(default=0, validation_alias="WORKER_ID")
     debug: bool = Field(default=True, validation_alias="DEBUG")
-    secret: str = Field(..., validation_alias="SECRET")
-    secret_key: SecretStr = Field(..., validation_alias="SECRET_KEY")
-    refresh_token_expire: int = Field(default=60, validation_alias="REFRESH_TOKEN_EXPIRE")
-    access_token_expire: int = Field(default=30, validation_alias="ACCESS_TOKEN_EXPIRE")
-    jwt_algorithm: str = Field(..., validation_alias="JWT_ALGORITHM")
 
 
 class PostgresSettings(ModelConfig):

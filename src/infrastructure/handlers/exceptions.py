@@ -5,10 +5,13 @@ from fastapi import HTTPException, Request, Response, status
 
 from src.domain.exceptions import (
     Forbidden,
-    PasswordsNotMatch,
+    InvalidVerifyCode,
     SessionHasExpired,
-    UserAlreadyExists,
+    UserEmailAlreadyExists,
+    UsernameAlreadyExists,
     UserNotFound,
+    VerifyCodeNotConfirmed,
+    CodeHasExpired,
 )
 
 
@@ -35,6 +38,10 @@ exception_handlers: dict[
         status_code=status.HTTP_403_FORBIDDEN,
         detail="Недостаточно прав для выполнения операции."
     ),
+    InvalidVerifyCode: create_exception_handler(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail="Неверный код."
+    ),
     SessionHasExpired: create_exception_handler(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Сессия устарела или была завершена."
@@ -43,12 +50,20 @@ exception_handlers: dict[
         status_code=status.HTTP_404_NOT_FOUND,
         detail="Пользователь не найден."
     ),
-    PasswordsNotMatch: create_exception_handler(
-        status_code=status.HTTP_400_BAD_REQUEST,
-        detail="Введенные пароли не совпадают."
-    ),
-    UserAlreadyExists: create_exception_handler(
+    UserEmailAlreadyExists: create_exception_handler(
         status_code=status.HTTP_409_CONFLICT,
         detail="Пользователь с таким email уже существует."
+    ),
+    UsernameAlreadyExists: create_exception_handler(
+        status_code=status.HTTP_409_CONFLICT,
+        detail="Пользователь с таким username уже существует."
+    ),
+    VerifyCodeNotConfirmed: create_exception_handler(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail="Проверочный код не подтвержден."
+    ),
+    CodeHasExpired: create_exception_handler(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail="Код был просрочен."
     ),
 }
