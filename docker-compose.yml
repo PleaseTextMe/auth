@@ -1,6 +1,27 @@
 version: '3.8'
 
 services:
+  auth_app:
+    build: .
+    container_name: please_text_me_auth
+    ports:
+      - "8000:8000"
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=please_text_me_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-secret}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+    depends_on:
+      postgres:
+        condition: service_started
+      redis:
+        condition: service_started
+    restart: unless-stopped
+
   redis:
     image: redis:7-alpine
     container_name: please_text_me_redis
@@ -11,18 +32,18 @@ services:
     restart: unless-stopped
     command: redis-server --appendonly yes
 
-  # postgres:
-  #   image: postgres:15-alpine
-  #   container_name: please_text_me_postgres
-  #   ports:
-  #     - "5432:5432"
-  #   environment:
-  #     POSTGRES_USER: postgres
-  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secret}
-  #     POSTGRES_DB: please_text_me_db
-  #   volumes:
-  #     - postgres_data:/var/lib/postgresql/data
-  #   restart: unless-stopped
+  postgres:
+    image: postgres:15-alpine
+    container_name: please_text_me_postgres
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secret}
+      POSTGRES_DB: please_text_me_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
 
 volumes:
   redis_data:
