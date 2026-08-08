@@ -21,3 +21,7 @@ class IUserRepository(abc.ABC):
 
     @abc.abstractmethod
     async def get_by_id(self, user_id: int) -> User | None: ...
+
+    @abc.abstractmethod
+    async def get_all(self) -> list[User]: ...
+

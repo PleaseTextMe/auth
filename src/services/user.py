@@ -23,6 +23,9 @@ class IUserService(ABC):
     @abstractmethod
     async def create(self, user_data: UserCreateDTO) -> User: ...
 
+    @abstractmethod
+    async def get_all(self) -> list[User]: ...
+
 
 class UserService(IUserService):
     def __init__(self, uow: IUnitOfWork):
@@ -59,3 +62,8 @@ class UserService(IUserService):
                 **user_dict
             )
             return await uow.user_repository.create(user_data)
+
+    async def get_all(self) -> list[User]:
+        async with self._uow as uow:
+            return await uow.user_repository.get_all()
+

@@ -42,6 +42,13 @@ class SQLAlchemyUserRepository(IUserRepository):
         db_user = result.scalar_one_or_none()
         return User.model_validate(db_user) if db_user else None
 
+    async def get_all(self) -> list[User]:
+        query = select(User)
+        result: Result = await self._session.execute(query)
+        db_users = result.unique().scalars().all()
+        return [User.model_validate(u) for u in db_users]
+
+
     # async def create(self, address: AddressCreateDTO) -> Address:
     #     insert_data = address.model_dump()
     #     insert_data["location"] = WKTElement(
