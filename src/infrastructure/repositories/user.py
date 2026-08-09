@@ -18,7 +18,7 @@ class SQLAlchemyUserRepository(IUserRepository):
         self._session: AsyncSession = session
 
     async def create(self, user_data: UserCreateDatabaseDTO) -> User:
-        insert_data = user_data.model_dump()
+        insert_data = user_data.model_dump(exclude_none=True)
         query = insert(User).values(insert_data).returning(User)
         result: Result = await self._session.execute(query)
         db_user = result.unique().scalar_one()
