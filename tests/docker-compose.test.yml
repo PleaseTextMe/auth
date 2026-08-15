@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: please_text_me_postgres_test
+    ports:
+      - "5435:5432" # Use a different port to avoid conflicts with local dev DB
+    environment:
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_password
+      POSTGRES_DB: please_text_me_test_db
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: please_text_me_redis_test
+    ports:
+      - "6380:6379" # Use a different port to avoid conflicts with local dev Redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
