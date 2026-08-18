@@ -1,17 +1,19 @@
+from unittest.mock import AsyncMock
+
 import pytest
-from httpx import AsyncClient, ASGITransport
 from dishka import Provider, Scope, make_async_container, provide
 from dishka.integrations.fastapi import setup_dishka
 from fastapi import FastAPI
-from unittest.mock import AsyncMock
+from httpx import ASGITransport, AsyncClient
 
-from src.api.v1.router import router
-from src.services.user import IUserService
-from src.services.session import ISessionService
-from src.services.verify import IVerifyService
 from src.api.v1.depends import get_current_session, get_current_user
-from src.domain.entities.user import User
+from src.api.v1.router import router
 from src.domain.entities.session import Session
+from src.domain.entities.user import User
+from src.services.session import ISessionService
+from src.services.user import IUserService
+from src.services.verify import IVerifyService
+
 
 @pytest.fixture
 async def mock_user_service():
@@ -45,7 +47,7 @@ def mock_session():
 @pytest.fixture
 def mock_user():
     return User(
-        id=1, 
+        id=1,
         email="test@test.com",
         username="testuser",
         password_hash="hash",
@@ -58,26 +60,26 @@ def mock_user():
 async def test_app(mock_user_service, mock_session_service, mock_verify_service, mock_session, mock_user):
     app = FastAPI()
     app.include_router(router, prefix="/api")
-    
+
     class MockProvider(Provider):
         @provide(scope=Scope.APP)
         def get_user_service(self) -> IUserService:
             return mock_user_service
-            
+
         @provide(scope=Scope.APP)
         def get_session_service(self) -> ISessionService:
             return mock_session_service
-            
+
         @provide(scope=Scope.APP)
         def get_verify_service(self) -> IVerifyService:
             return mock_verify_service
-            
+
     container = make_async_container(MockProvider())
     setup_dishka(container=container, app=app)
-    
+
     app.dependency_overrides[get_current_session] = lambda: mock_session
     app.dependency_overrides[get_current_user] = lambda: mock_user
-    
+
     yield app
     await container.close()
 

@@ -1,5 +1,6 @@
 from src.core.utils.hash import hash_token
 
+
 def test_hash_token_returns_bytes():
     token = "test_token_123"
     result = hash_token(token)

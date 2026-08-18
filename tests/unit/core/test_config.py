@@ -1,6 +1,5 @@
-import os
-from pydantic import SecretStr
-from src.core.config import Settings, PostgresSettings, RedisSettings, ServiceSettings
+from src.core.config import PostgresSettings, RedisSettings, ServiceSettings, Settings
+
 
 def test_postgres_settings_connection_url():
     pg_settings = PostgresSettings(

@@ -1,20 +1,22 @@
+from unittest.mock import AsyncMock
+
 import pytest
-from httpx import AsyncClient, ASGITransport
 from dishka import Provider, Scope, make_async_container, provide
 from dishka.integrations.fastapi import setup_dishka
 from fastapi import FastAPI
-from unittest.mock import AsyncMock
+from httpx import ASGITransport, AsyncClient
 
 from src.api.v1.router import router
-from src.services.user import IUserService
 from src.domain.entities.user import User
+from src.services.user import IUserService
+
 
 @pytest.fixture
 async def mock_user_service():
     service = AsyncMock(spec=IUserService)
     # mock get_all
     user1 = User(
-        id=1, 
+        id=1,
         email="test@test.com",
         username="testuser",
         password_hash="hash",
@@ -29,12 +31,12 @@ async def mock_user_service():
 async def test_app(mock_user_service):
     app = FastAPI()
     app.include_router(router, prefix="/api")
-    
+
     class MockProvider(Provider):
         @provide(scope=Scope.APP)
         def get_user_service(self) -> IUserService:
             return mock_user_service
-            
+
     container = make_async_container(MockProvider())
     setup_dishka(container=container, app=app)
     yield app

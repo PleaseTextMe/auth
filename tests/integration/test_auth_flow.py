@@ -1,8 +1,5 @@
-import pytest
 import httpx
-from src.core.config import settings
-from src.infrastructure.db import postgres
-from sqlalchemy import text
+import pytest
 
 
 @pytest.mark.integration

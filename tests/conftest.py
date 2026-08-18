@@ -11,6 +11,7 @@ from fastapi import FastAPI
 
 from src.main import create_app
 
+
 @pytest.fixture(scope="session")
 def event_loop():
     """Create an instance of the default event loop for each test case."""
@@ -25,11 +26,11 @@ def setup_docker_infrastructure(request):
     if not has_integration:
         yield
         return
-    
+
     if os.environ.get("MOCK_EXTERNAL_API"):
         yield
         return
-    
+
     compose_file = "tests/docker-compose.test.yml"
     print("\nStarting test infrastructure...")
     try:
@@ -37,15 +38,15 @@ def setup_docker_infrastructure(request):
     except subprocess.CalledProcessError as e:
         print(f"\nWarning: Failed to auto-start docker infrastructure. Error:\n{e.stderr}\nMake sure to run 'sudo docker compose -f {compose_file} up -d' manually before running tests.")
 
-    
+
     print("Waiting for Postgres to be ready...")
     time.sleep(3) # Wait for db to accept connections
-    
+
     print("Running migrations...")
     subprocess.run(["alembic", "upgrade", "head"], check=True)
-    
+
     yield
-    
+
     try:
         subprocess.run(["docker", "compose", "-f", compose_file, "down"], check=True, capture_output=True)
     except subprocess.CalledProcessError:

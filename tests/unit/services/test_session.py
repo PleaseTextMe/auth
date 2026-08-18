@@ -1,11 +1,12 @@
-import pytest
 from unittest.mock import AsyncMock
 
-from src.services.session import SessionService
+import pytest
+
+from src.core.utils.hash import password_hasher
 from src.domain.dtos.session import SessionCreateDTO
 from src.domain.entities.user import User
 from src.domain.exceptions import UserNotFound
-from src.core.utils.hash import password_hasher
+from src.services.session import SessionService
 
 
 @pytest.fixture
@@ -53,9 +54,9 @@ def session_data(valid_password):
 async def test_create_session_success(session_service, uow_mock, session_data, user_mock):
     uow_mock.user_repository.get_by_email.return_value = user_mock
     uow_mock.session_repository.create.return_value = None
-    
+
     auth_token = await session_service.create(session_data)
-    
+
     assert auth_token is not None
     assert isinstance(auth_token, str)
     uow_mock.user_repository.get_by_email.assert_called_once_with(user_email=session_data.email)
@@ -65,10 +66,10 @@ async def test_create_session_success(session_service, uow_mock, session_data, u
 @pytest.mark.asyncio
 async def test_create_session_user_not_found(session_service, uow_mock, session_data):
     uow_mock.user_repository.get_by_email.return_value = None
-    
+
     with pytest.raises(UserNotFound):
         await session_service.create(session_data)
-        
+
     uow_mock.user_repository.get_by_email.assert_called_once_with(user_email=session_data.email)
     uow_mock.session_repository.create.assert_not_called()
 
@@ -77,10 +78,10 @@ async def test_create_session_user_not_found(session_service, uow_mock, session_
 async def test_create_session_invalid_password(session_service, uow_mock, session_data, user_mock):
     session_data.password = "WrongPassword!"
     uow_mock.user_repository.get_by_email.return_value = user_mock
-    
+
     with pytest.raises(UserNotFound):
         await session_service.create(session_data)
-        
+
     uow_mock.user_repository.get_by_email.assert_called_once_with(user_email=session_data.email)
     uow_mock.session_repository.create.assert_not_called()
 
@@ -88,7 +89,7 @@ async def test_create_session_invalid_password(session_service, uow_mock, sessio
 @pytest.mark.asyncio
 async def test_logout_success(session_service, uow_mock):
     auth_token_hash = "some_hash"
-    
+
     await session_service.logout(auth_token_hash)
-    
+
     uow_mock.session_repository.deactivate_token.assert_called_once_with(auth_token_hash)

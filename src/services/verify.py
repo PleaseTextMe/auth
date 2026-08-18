@@ -44,7 +44,7 @@ class VerifyService(IVerifyService):
             await uow.verify_repository.set_value(
                 key=verify_token,
                 value=json.dumps(redis_data),
-                exp=5 
+                exp=5
             )
 
             return verify_token
@@ -70,8 +70,8 @@ class VerifyService(IVerifyService):
                 raise InvalidVerifyCode()
 
             await uow.verify_repository.update_field(
-                key=verify_data.verify_token, 
-                field="status", 
+                key=verify_data.verify_token,
+                field="status",
                 value="verified",
                 new_exp=24 * 60
             )
