@@ -8,4 +8,4 @@ scrape_configs:
 
   - job_name: 'sending_microservice'
     static_configs:
-      - targets: ['host.docker.internal:8001']
+      - targets: ['please_text_me_sending:8001']
