@@ -1,5 +1,4 @@
 import asyncio
-import os
 import subprocess
 import time
 from typing import AsyncGenerator
@@ -27,9 +26,7 @@ def setup_docker_infrastructure(request):
         yield
         return
 
-    if os.environ.get("MOCK_EXTERNAL_API"):
-        yield
-        return
+
 
     compose_file = "tests/docker-compose.test.yml"
     print("\nStarting test infrastructure...")

@@ -36,8 +36,6 @@ jobs:
         run: ruff check src tests
 
       - name: Run Pytest (Unit & Integration)
-        env:
-          MOCK_EXTERNAL_API: "true" # Flag to skip external paid APIs if any
         run: |
           # Docker is pre-installed on ubuntu-latest runner
           # The tests/conftest.py will automatically start docker compose and run migrations
