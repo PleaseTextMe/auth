@@ -31,6 +31,11 @@ class VerifyService(IVerifyService):
 
     async def create_email_code(self, user_email: EmailStr) -> str | None:
         async with self._uow as uow:
+            if await uow.user_repository.get_by_email(
+                user_email=user_email
+            ):
+                raise UserEmailAlreadyExists()
+
             # verification_code = int(f"{secrets.randbelow(1000000):06d}")  TODO: Restore this
             verification_code = 666_666
             verify_token = secrets.token_urlsafe(32)
