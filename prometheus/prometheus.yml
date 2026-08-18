@@ -1,0 +1,11 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: 'auth_microservice'
+    static_configs:
+      - targets: ['auth_app:8000']
+
+  - job_name: 'sending_microservice'
+    static_configs:
+      - targets: ['please_text_me_sending:8001']

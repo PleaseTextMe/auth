@@ -31,6 +31,11 @@ class VerifyService(IVerifyService):
 
     async def create_email_code(self, user_email: EmailStr) -> str | None:
         async with self._uow as uow:
+            if await uow.user_repository.get_by_email(
+                user_email=user_email
+            ):
+                raise UserEmailAlreadyExists()
+
             # verification_code = int(f"{secrets.randbelow(1000000):06d}")  TODO: Restore this
             verification_code = 666_666
             verify_token = secrets.token_urlsafe(32)
@@ -44,7 +49,7 @@ class VerifyService(IVerifyService):
             await uow.verify_repository.set_value(
                 key=verify_token,
                 value=json.dumps(redis_data),
-                exp=5 
+                exp=5
             )
 
             return verify_token
@@ -70,8 +75,8 @@ class VerifyService(IVerifyService):
                 raise InvalidVerifyCode()
 
             await uow.verify_repository.update_field(
-                key=verify_data.verify_token, 
-                field="status", 
+                key=verify_data.verify_token,
+                field="status",
                 value="verified",
                 new_exp=24 * 60
             )

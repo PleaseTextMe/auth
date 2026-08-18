@@ -48,12 +48,12 @@ class UserService(IUserService):
             ):
                 raise VerifyCodeNotConfirmed()
 
-            await uow.verify_repository.delete_value(user_data.verify_token)
-
             if await uow.user_repository.get_by_username(
                 username=user_data.username
             ):
                 raise UsernameAlreadyExists()
+
+            await uow.verify_repository.delete_value(user_data.verify_token)
 
             hashed_password = password_hasher.hash(user_data.password).encode("utf-8")
             user_dict = user_data.model_dump(exclude={"password"})

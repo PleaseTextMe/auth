@@ -65,5 +65,5 @@ class AppLifetime(AbstractAppLifetime):
 
     async def _disconnect_from_redis(self) -> None:
         if redis.redis_client is not None:
-            await redis.redis_client.close()
+            await redis.redis_client.aclose()
             logger.info("Отключение от Redis")
