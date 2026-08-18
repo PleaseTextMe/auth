@@ -148,3 +148,12 @@ async def test_get_my_session_info(test_client):
     response = await test_client.get("/api/v1/auth/my-session/")
     assert response.status_code == 200
     assert response.json()["id"] == 1
+
+@pytest.mark.asyncio
+async def test_login_invalid_password_chars(test_client):
+    payload = {
+        "email": "test@test.com",
+        "password": "пароль"  # Cyrillic characters are rejected by validator
+    }
+    response = await test_client.post("/api/v1/auth/login/", json=payload, headers={"user-agent": "test", "host": "127.0.0.1"})
+    assert response.status_code == 422
