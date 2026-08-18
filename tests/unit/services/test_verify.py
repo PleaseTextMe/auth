@@ -33,6 +33,7 @@ def verify_data():
 @pytest.mark.asyncio
 async def test_create_email_code_success(verify_service, uow_mock):
     email = "test@example.com"
+    uow_mock.user_repository.get_by_email.return_value = None
 
     verify_token = await verify_service.create_email_code(email)
 
