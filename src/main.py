@@ -1,9 +1,11 @@
+import traceback
 from contextlib import asynccontextmanager
 
 from dishka import make_async_container
 from dishka.integrations.fastapi import setup_dishka
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
 
 from src.api.v1.router import router
@@ -23,9 +25,6 @@ async def lifespan(fastapi_app: FastAPI):
         await fastapi_app.state.dishka_container.close()
 
 
-import traceback
-from fastapi import Request
-from fastapi.responses import JSONResponse
 
 def create_app() -> FastAPI:
     fastapi_app = FastAPI(
