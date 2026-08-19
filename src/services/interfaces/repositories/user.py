@@ -9,6 +9,7 @@ from src.domain.entities.user import User
 
 
 class IUserRepository(abc.ABC):
+
     @abc.abstractmethod
     async def create(self, user_data: UserCreateDatabaseDTO) -> User: ...
 
@@ -23,3 +24,4 @@ class IUserRepository(abc.ABC):
 
     @abc.abstractmethod
     async def get_all(self) -> list[User]: ...
+
