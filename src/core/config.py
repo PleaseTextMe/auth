@@ -1,4 +1,3 @@
-import os
 from logging import config as logging_config
 from pathlib import Path
 
@@ -7,7 +6,6 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from src.core.logger import LOGGING
 
-os.makedirs("logs", exist_ok=True)
 logging_config.dictConfig(LOGGING)
 
 
