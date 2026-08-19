@@ -8,12 +8,7 @@ mapper_registry = registry()
 
 def timestamp_columns():
     return [
-        Column(
-            "created_at",
-            DateTime,
-            nullable=False,
-            default=get_utc_now
-        ),
+        Column("created_at", DateTime, nullable=False, default=get_utc_now),
         Column(
             "updated_at",
             DateTime,

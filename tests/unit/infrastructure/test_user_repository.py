@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock
 
 import pytest
+
 from src.domain.dtos.user import UserCreateDatabaseDTO
 from src.infrastructure.repositories.user import SQLAlchemyUserRepository
 

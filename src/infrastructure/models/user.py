@@ -20,6 +20,7 @@ user = Table(
     *timestamp_columns(),
 )
 
+
 def mapped_user_table():
     mapper_registry.map_imperatively(
         User,

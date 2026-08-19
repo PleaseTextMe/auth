@@ -27,6 +27,4 @@ short_url_not_found_handler = create_exception_handler(
 exception_handlers: dict[
     type[Exception],
     Callable[[Request, Exception], Coroutine[Any, Any, Response]],
-] = {
-    ShortUrlNotFound: short_url_not_found_handler
-}
+] = {ShortUrlNotFound: short_url_not_found_handler}

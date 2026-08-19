@@ -4,7 +4,6 @@ from src.domain.entities.session import Session
 
 
 class ISessionRepository(abc.ABC):
-
     @abc.abstractmethod
     async def create(self, session_data: Session) -> Session: ...
 

@@ -35,7 +35,7 @@ def user_mock(valid_password):
         password_hash=password_hasher.hash(valid_password).encode("utf-8"),
         public_bundle={},
         vault={},
-        is_active=True
+        is_active=True,
     )
 
 
@@ -46,7 +46,7 @@ def session_data(valid_password):
         password=valid_password,
         user_agent="test-agent",
         user_ip="127.0.0.1",
-        device_type="test-device"
+        device_type="test-device",
     )
 
 

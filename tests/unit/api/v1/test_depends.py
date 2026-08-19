@@ -23,6 +23,7 @@ def mock_uow():
     uow.__aexit__.return_value = False
     return uow
 
+
 @pytest.fixture
 def valid_session():
     return Session(
@@ -32,8 +33,9 @@ def valid_session():
         user_agent="agent",
         user_ip="ip",
         device_type="web",
-        is_active=True
+        is_active=True,
     )
+
 
 @pytest.fixture
 def valid_user():
@@ -44,8 +46,9 @@ def valid_user():
         password_hash="hash",
         public_bundle={"key": "val"},
         vault={"key": "val"},
-        is_active=True
+        is_active=True,
     )
+
 
 @pytest.fixture
 async def test_app(mock_uow):
@@ -69,10 +72,12 @@ async def test_app(mock_uow):
     yield app
     await container.close()
 
+
 @pytest.fixture
 async def test_client(test_app):
     async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
         yield ac
+
 
 @pytest.mark.asyncio
 async def test_get_current_session_success(test_client, mock_uow, valid_session):
@@ -81,11 +86,13 @@ async def test_get_current_session_success(test_client, mock_uow, valid_session)
     assert response.status_code == 200
     assert response.json() == {"id": 1}
 
+
 @pytest.mark.asyncio
 async def test_get_current_session_no_token(test_client):
     response = await test_client.get("/session/")
     assert response.status_code == 401
     assert response.json()["detail"] == "Необходимо авторизоваться"
+
 
 @pytest.mark.asyncio
 async def test_get_current_session_not_found(test_client, mock_uow):
@@ -93,6 +100,7 @@ async def test_get_current_session_not_found(test_client, mock_uow):
     response = await test_client.get("/session/", headers={"x-auth-token": "invalid_token"})
     assert response.status_code == 401
     assert response.json()["detail"] == "Сессия не найдена или недействительна"
+
 
 @pytest.mark.asyncio
 async def test_get_current_session_inactive(test_client, mock_uow, valid_session):
@@ -102,6 +110,7 @@ async def test_get_current_session_inactive(test_client, mock_uow, valid_session
     assert response.status_code == 401
     assert response.json()["detail"] == "Сессия завершена"
 
+
 @pytest.mark.asyncio
 async def test_get_current_user_success(test_client, mock_uow, valid_session, valid_user):
     mock_uow.session_repository.get_by_hash.return_value = valid_session
@@ -110,6 +119,7 @@ async def test_get_current_user_success(test_client, mock_uow, valid_session, va
     assert response.status_code == 200
     assert response.json() == {"id": 1}
 
+
 @pytest.mark.asyncio
 async def test_get_current_user_not_found(test_client, mock_uow, valid_session):
     mock_uow.session_repository.get_by_hash.return_value = valid_session
@@ -117,6 +127,7 @@ async def test_get_current_user_not_found(test_client, mock_uow, valid_session):
     response = await test_client.get("/user/", headers={"x-auth-token": "valid_token"})
     assert response.status_code == 401
     assert response.json()["detail"] == "Пользователь не найден"
+
 
 @pytest.mark.asyncio
 async def test_get_current_user_inactive(test_client, mock_uow, valid_session, valid_user):

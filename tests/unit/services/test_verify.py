@@ -23,11 +23,7 @@ def verify_service(uow_mock):
 
 @pytest.fixture
 def verify_data():
-    return VerifyCodeDTO(
-        email="test@example.com",
-        code=666666,
-        verify_token="token123"
-    )
+    return VerifyCodeDTO(email="test@example.com", code=666666, verify_token="token123")
 
 
 @pytest.mark.asyncio
@@ -51,11 +47,7 @@ async def test_create_email_code_success(verify_service, uow_mock):
 async def test_verify_email_code_success(verify_service, uow_mock, verify_data):
     uow_mock.user_repository.get_by_email.return_value = None
 
-    redis_data = {
-        "email": verify_data.email,
-        "code": verify_data.code,
-        "status": "pending"
-    }
+    redis_data = {"email": verify_data.email, "code": verify_data.code, "status": "pending"}
     uow_mock.verify_repository.get_value.return_value = json.dumps(redis_data)
 
     await verify_service.verify_email_code(verify_data)
@@ -63,10 +55,7 @@ async def test_verify_email_code_success(verify_service, uow_mock, verify_data):
     uow_mock.user_repository.get_by_email.assert_called_once_with(user_email=verify_data.email)
     uow_mock.verify_repository.get_value.assert_called_once_with(verify_data.verify_token)
     uow_mock.verify_repository.update_field.assert_called_once_with(
-        key=verify_data.verify_token,
-        field="status",
-        value="verified",
-        new_exp=24 * 60
+        key=verify_data.verify_token, field="status", value="verified", new_exp=24 * 60
     )
 
 
@@ -94,11 +83,7 @@ async def test_verify_email_code_expired(verify_service, uow_mock, verify_data):
 async def test_verify_email_code_invalid_code(verify_service, uow_mock, verify_data):
     uow_mock.user_repository.get_by_email.return_value = None
 
-    redis_data = {
-        "email": verify_data.email,
-        "code": 111111,
-        "status": "pending"
-    }
+    redis_data = {"email": verify_data.email, "code": 111111, "status": "pending"}
     uow_mock.verify_repository.get_value.return_value = json.dumps(redis_data)
 
     with pytest.raises(InvalidVerifyCode):
@@ -109,11 +94,7 @@ async def test_verify_email_code_invalid_code(verify_service, uow_mock, verify_d
 async def test_verify_email_code_invalid_email(verify_service, uow_mock, verify_data):
     uow_mock.user_repository.get_by_email.return_value = None
 
-    redis_data = {
-        "email": "different@example.com",
-        "code": verify_data.code,
-        "status": "pending"
-    }
+    redis_data = {"email": "different@example.com", "code": verify_data.code, "status": "pending"}
     uow_mock.verify_repository.get_value.return_value = json.dumps(redis_data)
 
     with pytest.raises(InvalidVerifyCode):

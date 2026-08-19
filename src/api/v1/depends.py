@@ -25,8 +25,7 @@ async def get_current_session(
     """
     if not auth_token:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Необходимо авторизоваться"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Необходимо авторизоваться"
         )
 
     token_hash = hash_token(auth_token)
@@ -38,15 +37,12 @@ async def get_current_session(
             logger.warning("Попытка входа с несуществующим токеном")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Сессия не найдена или недействительна"
+                detail="Сессия не найдена или недействительна",
             )
 
         if not session.is_active:
             logger.info(f"Попытка использования деактивированной сессии: {session.id}")
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Сессия завершена"
-            )
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Сессия завершена")
 
         return session
 
@@ -64,17 +60,17 @@ async def get_current_user(
         user = await current_uow.user_repository.get_by_id(session.user_id)
 
         if not user:
-            logger.error(f"Сессия {session.id} ссылается на удаленного пользователя {session.user_id}")
+            logger.error(
+                f"Сессия {session.id} ссылается на удаленного пользователя {session.user_id}"
+            )
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Пользователь не найден"
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Пользователь не найден"
             )
 
         if getattr(user, "is_active", True) is False:
             logger.warning(f"Заблокированный пользователь {user.id} пытается получить доступ")
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Аккаунт заблокирован"
+                status_code=status.HTTP_403_FORBIDDEN, detail="Аккаунт заблокирован"
             )
 
         return user

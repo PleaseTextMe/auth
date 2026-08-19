@@ -22,11 +22,7 @@ from src.services.verify import IVerifyService
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(
-    prefix="/auth",
-    tags=["Auth"],
-    route_class=DishkaRoute
-)
+router = APIRouter(prefix="/auth", tags=["Auth"], route_class=DishkaRoute)
 
 
 @router.post(
@@ -41,9 +37,7 @@ async def register(
     user_service: FromDishka[IUserService],
     session_service: FromDishka[ISessionService],
 ) -> LoginResponse:
-    await user_service.create(
-        UserCreateDTO(**register_form.model_dump())
-    )
+    await user_service.create(UserCreateDTO(**register_form.model_dump()))
     auth_token = await session_service.create(
         SessionCreateDTO(
             **register_form.model_dump(),
@@ -83,9 +77,7 @@ async def send_verify_code(
     send_code_form: SendCodeForm,
     verify_service: FromDishka[IVerifyService],
 ) -> SendCodeResponse:
-    verify_token = await verify_service.create_email_code(
-        send_code_form.email
-    )
+    verify_token = await verify_service.create_email_code(send_code_form.email)
     return SendCodeResponse(verify_token=verify_token)
 
 
@@ -98,36 +90,20 @@ async def check_verify_code(
     check_code_form: CheckCodeForm,
     verify_service: FromDishka[IVerifyService],
 ) -> CheckVerifyCodeResponse:
-    await verify_service.verify_email_code(
-        VerifyCodeDTO(**check_code_form.model_dump())
-    )
+    await verify_service.verify_email_code(VerifyCodeDTO(**check_code_form.model_dump()))
     return CheckVerifyCodeResponse(is_verified=True)
 
 
-@router.post(
-    "/logout/",
-    status_code=status.HTTP_204_NO_CONTENT
-)
-async def logout(
-    session_service: FromDishka[ISessionService],
-    session: CurrentSessionDep
-):
+@router.post("/logout/", status_code=status.HTTP_204_NO_CONTENT)
+async def logout(session_service: FromDishka[ISessionService], session: CurrentSessionDep):
     await session_service.logout(session.auth_token_hash)
 
 
-@router.get(
-    "/me/"
-)
-async def get_me(
-    user: CurrentUserDep
-):
+@router.get("/me/")
+async def get_me(user: CurrentUserDep):
     return user
 
 
-@router.get(
-    "/my-session/"
-)
-async def get_my_session_info(
-    session: CurrentSessionDep
-):
+@router.get("/my-session/")
+async def get_my_session_info(session: CurrentSessionDep):
     return session

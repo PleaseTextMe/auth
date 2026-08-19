@@ -37,15 +37,21 @@ class AppLifetime(AbstractAppLifetime):
     #     logger.info("Отключение от RabbitMQ")
 
     async def _connect_to_postgres(self) -> None:
-        postgres.engine = create_async_engine(url=settings.postgres.connection_url, echo=settings.postgres.echo)
-        postgres.session_maker = async_sessionmaker(postgres.engine, expire_on_commit=False, class_=AsyncSession)
+        postgres.engine = create_async_engine(
+            url=settings.postgres.connection_url, echo=settings.postgres.echo
+        )
+        postgres.session_maker = async_sessionmaker(
+            postgres.engine, expire_on_commit=False, class_=AsyncSession
+        )
         try:
             async with postgres.engine.begin() as _:
                 logger.info("✅ Соединение с базой данных успешно установлено")
                 start_mappers()
         except Exception as e:
             logger.error(
-                "❌ Ошибка при установлении соединения с базой данных %s: %s", settings.postgres.connection_url, e
+                "❌ Ошибка при установлении соединения с базой данных %s: %s",
+                settings.postgres.connection_url,
+                e,
             )
             raise e
 

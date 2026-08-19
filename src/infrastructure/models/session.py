@@ -32,6 +32,7 @@ session = Table(
     *timestamp_columns(),
 )
 
+
 def mapped_session_table():
     mapper_registry.map_imperatively(
         Session,

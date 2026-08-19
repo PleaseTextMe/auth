@@ -22,10 +22,11 @@ async def mock_user_service():
         password_hash="hash",
         public_bundle={"key": "val"},
         vault={"key": "val"},
-        is_active=True
+        is_active=True,
     )
     service.get_all.return_value = [user1]
     return service
+
 
 @pytest.fixture
 async def test_app(mock_user_service):
@@ -42,10 +43,12 @@ async def test_app(mock_user_service):
     yield app
     await container.close()
 
+
 @pytest.fixture
 async def test_client(test_app):
     async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
         yield ac
+
 
 @pytest.mark.asyncio
 async def test_get_all_users(test_client, mock_user_service):
