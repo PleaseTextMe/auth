@@ -29,6 +29,11 @@ def create_app() -> FastAPI:
         openapi_url="/api/openapi.json",
         exception_handlers=exception_handlers
     )
+    
+    @fastapi_app.get("/api/health")
+    async def healthcheck():
+        return {"status": "ok"}
+        
     fastapi_app.include_router(router, prefix="/api")
     container = make_async_container(Container())
     setup_dishka(container=container, app=fastapi_app)
