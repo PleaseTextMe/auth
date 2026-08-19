@@ -24,7 +24,7 @@ def session_service(uow_mock):
 
 @pytest.fixture
 def valid_password():
-    return "Password123!"
+    return "AxelUsingArchBTW123321"
 
 
 @pytest.fixture
