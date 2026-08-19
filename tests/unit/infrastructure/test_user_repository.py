@@ -1,16 +1,8 @@
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from src.domain.dtos.user import UserCreateDatabaseDTO
-from src.domain.entities.user import User
 from src.infrastructure.repositories.user import SQLAlchemyUserRepository
-
-
-@pytest.fixture
-def mock_session():
-    return AsyncMock(spec=AsyncSession)
 
 
 @pytest.fixture
@@ -18,19 +10,7 @@ def repo(mock_session):
     return SQLAlchemyUserRepository(session=mock_session)
 
 
-@pytest.fixture
-def mock_db_user():
-    return MagicMock()
-
-
-@pytest.fixture
-def mock_user_instance():
-    return MagicMock(spec=User)
-
-
 @pytest.mark.asyncio
-@patch("src.infrastructure.repositories.user.insert")
-@patch("src.infrastructure.repositories.user.User.model_validate")
 async def test_user_repo_create(
     mock_model_validate, mock_insert, repo, mock_session, mock_db_user, mock_user_instance
 ):
@@ -54,8 +34,6 @@ async def test_user_repo_create(
 
 
 @pytest.mark.asyncio
-@patch("src.infrastructure.repositories.user.select")
-@patch("src.infrastructure.repositories.user.User.model_validate")
 async def test_user_repo_get_by_email_found(
     mock_model_validate, mock_select, repo, mock_session, mock_db_user, mock_user_instance
 ):
@@ -75,7 +53,6 @@ async def test_user_repo_get_by_email_found(
 
 
 @pytest.mark.asyncio
-@patch("src.infrastructure.repositories.user.select")
 async def test_user_repo_get_by_email_not_found(mock_select, repo, mock_session):
     mock_query = MagicMock()
     mock_select.return_value.filter_by.return_value = mock_query
@@ -91,8 +68,6 @@ async def test_user_repo_get_by_email_not_found(mock_select, repo, mock_session)
 
 
 @pytest.mark.asyncio
-@patch("src.infrastructure.repositories.user.select")
-@patch("src.infrastructure.repositories.user.User.model_validate")
 async def test_user_repo_get_by_username_found(
     mock_model_validate, mock_select, repo, mock_session, mock_db_user, mock_user_instance
 ):
@@ -112,7 +87,6 @@ async def test_user_repo_get_by_username_found(
 
 
 @pytest.mark.asyncio
-@patch("src.infrastructure.repositories.user.select")
 async def test_user_repo_get_by_username_not_found(mock_select, repo, mock_session):
     mock_query = MagicMock()
     mock_select.return_value.filter_by.return_value = mock_query
@@ -128,8 +102,6 @@ async def test_user_repo_get_by_username_not_found(mock_select, repo, mock_sessi
 
 
 @pytest.mark.asyncio
-@patch("src.infrastructure.repositories.user.select")
-@patch("src.infrastructure.repositories.user.User.model_validate")
 async def test_user_repo_get_by_id_found(
     mock_model_validate, mock_select, repo, mock_session, mock_db_user, mock_user_instance
 ):
@@ -149,7 +121,6 @@ async def test_user_repo_get_by_id_found(
 
 
 @pytest.mark.asyncio
-@patch("src.infrastructure.repositories.user.select")
 async def test_user_repo_get_by_id_not_found(mock_select, repo, mock_session):
     mock_query = MagicMock()
     mock_select.return_value.filter_by.return_value = mock_query
@@ -165,8 +136,6 @@ async def test_user_repo_get_by_id_not_found(mock_select, repo, mock_session):
 
 
 @pytest.mark.asyncio
-@patch("src.infrastructure.repositories.user.select")
-@patch("src.infrastructure.repositories.user.User.model_validate")
 async def test_user_repo_get_all(
     mock_model_validate, mock_select, repo, mock_session, mock_db_user, mock_user_instance
 ):

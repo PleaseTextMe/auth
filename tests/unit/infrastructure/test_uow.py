@@ -1,25 +1,9 @@
-from unittest.mock import AsyncMock
-
 import pytest
-from redis.asyncio import Redis
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.infrastructure.repositories.session import SQLAlchemySessionRepository
 from src.infrastructure.repositories.user import SQLAlchemyUserRepository
 from src.infrastructure.repositories.verify import RedisVerifyRepository
 from src.infrastructure.uow import DatabaseUnitOfWork
-
-
-@pytest.fixture
-def mock_session():
-    return AsyncMock(spec=AsyncSession)
-
-
-@pytest.fixture
-def mock_redis():
-    return AsyncMock(spec=Redis)
-
-
 @pytest.fixture
 def uow(mock_session, mock_redis):
     return DatabaseUnitOfWork(session=mock_session, redis=mock_redis)
