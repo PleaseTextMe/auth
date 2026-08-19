@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from src.core.utils.datetime import get_utc_now
 
@@ -10,3 +10,9 @@ def test_get_utc_now_returns_datetime():
 def test_get_utc_now_is_naive():
     result = get_utc_now()
     assert result.tzinfo is None
+
+def test_get_utc_now_difference():
+    result = get_utc_now()
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    diff = abs((now - result).total_seconds())
+    assert diff < 60
