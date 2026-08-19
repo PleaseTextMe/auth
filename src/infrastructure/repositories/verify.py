@@ -36,7 +36,11 @@ class RedisVerifyRepository(IVerifyRepository):
         await self._redis.delete(self._make_key(key))
 
     async def update_field(
-        self, key: str, field: str, value: Any, new_exp: timedelta | int | None = None
+        self,
+        key: str,
+        field: str,
+        value: Any,
+        new_exp: timedelta | int | None = None
     ) -> None:
         full_key = self._make_key(key)
         raw_data = await self._redis.get(full_key)

@@ -14,11 +14,11 @@ from src.services.interfaces.uow import IUnitOfWork
 
 class DatabaseUnitOfWork(IUnitOfWork):
     def __init__(
-        self,
-        session: AsyncSession,
-        redis: Redis,
-        # producer: IProducer
-    ):
+            self,
+            session: AsyncSession,
+            redis: Redis,
+            # producer: IProducer
+        ):
         self.session = session
         self.redis = redis
         # self._producer = producer
@@ -43,6 +43,7 @@ class DatabaseUnitOfWork(IUnitOfWork):
     # @property
     # def producer(self) -> IProducer:
     #     return self._producer
+
 
     @property
     def user_repository(self) -> IUserRepository:
