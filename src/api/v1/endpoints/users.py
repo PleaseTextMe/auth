@@ -7,7 +7,11 @@ from src.services.user import IUserService
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/users", tags=["Users"], route_class=DishkaRoute)
+router = APIRouter(
+    prefix="/users",
+    tags=["Users"],
+    route_class=DishkaRoute
+)
 
 
 @router.get(
