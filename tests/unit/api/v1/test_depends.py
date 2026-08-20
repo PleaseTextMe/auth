@@ -3,38 +3,11 @@ import pytest
 from dishka import Provider, Scope, make_async_container, provide
 from dishka.integrations.fastapi import setup_dishka
 from fastapi import Depends, FastAPI
-from httpx import ASGITransport, AsyncClient
 
 from src.api.v1.depends import get_current_session, get_current_user
 from src.domain.entities.session import Session
 from src.domain.entities.user import User
 from src.services.interfaces.uow import IUnitOfWork
-
-
-@pytest.fixture
-def valid_session():
-    return Session(
-        id=1,
-        user_id=1,
-        auth_token_hash=b"hash",
-        user_agent="agent",
-        user_ip="ip",
-        device_type="web",
-        is_active=True,
-    )
-
-
-@pytest.fixture
-def valid_user():
-    return User(
-        id=1,
-        email="axel@harlem.hui",
-        username="testuser",
-        password_hash="hash",
-        public_bundle={"key": "val"},
-        vault={"key": "val"},
-        is_active=True,
-    )
 
 
 @pytest.fixture
@@ -58,12 +31,6 @@ async def test_app(mock_uow):
     setup_dishka(container=container, app=app)
     yield app
     await container.close()
-
-
-@pytest.fixture
-async def test_client(test_app):
-    async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
-        yield ac
 
 
 @pytest.mark.asyncio
