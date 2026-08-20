@@ -1,4 +1,3 @@
-from unittest.mock import AsyncMock
 
 import pytest
 from dishka import Provider, Scope, make_async_container, provide
@@ -10,18 +9,6 @@ from src.api.v1.depends import get_current_session, get_current_user
 from src.domain.entities.session import Session
 from src.domain.entities.user import User
 from src.services.interfaces.uow import IUnitOfWork
-
-
-@pytest.fixture
-def mock_uow():
-    uow = AsyncMock(spec=IUnitOfWork)
-    # mock repositories
-    uow.session_repository = AsyncMock()
-    uow.user_repository = AsyncMock()
-    # allow async with
-    uow.__aenter__.return_value = uow
-    uow.__aexit__.return_value = False
-    return uow
 
 
 @pytest.fixture
@@ -41,7 +28,7 @@ def valid_session():
 def valid_user():
     return User(
         id=1,
-        email="test@test.com",
+        email="axel@harlem.hui",
         username="testuser",
         password_hash="hash",
         public_bundle={"key": "val"},

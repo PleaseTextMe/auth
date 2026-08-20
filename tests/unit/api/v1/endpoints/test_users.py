@@ -17,7 +17,7 @@ async def mock_user_service():
     # mock get_all
     user1 = User(
         id=1,
-        email="test@test.com",
+        email="axel@harlem.hui",
         username="testuser",
         password_hash="hash",
         public_bundle={"key": "val"},

@@ -1,5 +1,4 @@
 import json
-from unittest.mock import AsyncMock
 
 import pytest
 
@@ -14,17 +13,6 @@ from src.services.user import UserService
 
 
 @pytest.fixture
-def mock_uow():
-    uow = AsyncMock()
-    uow.user_repository = AsyncMock()
-    uow.verify_repository = AsyncMock()
-    # Support async context manager
-    uow.__aenter__.return_value = uow
-    uow.__aexit__.return_value = None
-    return uow
-
-
-@pytest.fixture
 def user_service(mock_uow):
     return UserService(uow=mock_uow)
 
@@ -32,7 +20,7 @@ def user_service(mock_uow):
 @pytest.fixture
 def valid_user_data():
     return UserCreateDTO(
-        email="test@example.com",
+        email="hopso@kto.pID",
         username="testuser",
         password="password123",
         verify_token="token123",
@@ -74,7 +62,7 @@ async def test_create_user_success(user_service, mock_uow, valid_user_data):
 async def test_create_user_email_exists(user_service, mock_uow, valid_user_data):
     mock_uow.user_repository.get_by_email.return_value = User(
         id=1,
-        email="test@example.com",
+        email="hopso@kto.pID",
         username="a",
         password_hash=b"a",
         public_bundle={},

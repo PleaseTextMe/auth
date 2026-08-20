@@ -52,7 +52,7 @@ def mock_session():
 def mock_user():
     return User(
         id=1,
-        email="test@test.com",
+        email="axel@harlem.hui",
         username="testuser",
         password_hash="hash",
         public_bundle={"key": "val"},
@@ -100,15 +100,15 @@ async def test_client(test_app):
 @pytest.mark.asyncio
 async def test_register(test_client, mock_user_service, mock_session_service):
     payload = {
-        "email": "test@test.com",
+        "email": "axel@harlem.hui",
         "username": "testuser",
-        "password": "password",
+        "password": "windows_wanna_suck",
         "verify_token": "token",
         "public_bundle": {"bundle_json": "{}", "signature": "sig"},
         "vault": {"encrypted_payload": "enc", "nonce": "nonce", "auth_tag": "tag"},
     }
     response = await test_client.post(
-        "/api/v1/auth/register/", json=payload, headers={"user-agent": "test", "host": "127.0.0.1"}
+        "/api/v1/auth/register/", json=payload, headers={"user-agent": "HelloToPavelDurov", "host": "127.0.0.1"}
     )
     assert response.status_code == 201
     assert response.json() == {"auth_token": "mock_auth_token"}
@@ -118,9 +118,9 @@ async def test_register(test_client, mock_user_service, mock_session_service):
 
 @pytest.mark.asyncio
 async def test_login(test_client, mock_session_service):
-    payload = {"email": "test@test.com", "password": "password"}
+    payload = {"email": "axel@harlem.hui", "password": "windows_wanna_suck"}
     response = await test_client.post(
-        "/api/v1/auth/login/", json=payload, headers={"user-agent": "test", "host": "127.0.0.1"}
+        "/api/v1/auth/login/", json=payload, headers={"user-agent": "HelloToPavelDurov", "host": "127.0.0.1"}
     )
     assert response.status_code == 200
     assert response.json() == {"auth_token": "mock_auth_token"}
@@ -129,16 +129,16 @@ async def test_login(test_client, mock_session_service):
 
 @pytest.mark.asyncio
 async def test_send_verify_code(test_client, mock_verify_service):
-    payload = {"email": "test@test.com"}
+    payload = {"email": "axel@harlem.hui"}
     response = await test_client.post("/api/v1/auth/send-verify-code/", json=payload)
     assert response.status_code == 200
     assert response.json() == {"verify_token": "mock_verify_token"}
-    mock_verify_service.create_email_code.assert_called_once_with("test@test.com")
+    mock_verify_service.create_email_code.assert_called_once_with("axel@harlem.hui")
 
 
 @pytest.mark.asyncio
 async def test_check_verify_code(test_client, mock_verify_service):
-    payload = {"email": "test@test.com", "code": "123456", "verify_token": "token"}
+    payload = {"email": "axel@harlem.hui", "code": "123456", "verify_token": "token"}
     response = await test_client.post("/api/v1/auth/check-verify-code/", json=payload)
     assert response.status_code == 200
     assert response.json() == {"is_verified": True}
