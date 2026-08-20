@@ -29,7 +29,7 @@ def create_app() -> FastAPI:
         openapi_url="/api/openapi.json",
         exception_handlers=exception_handlers
     )
-    fastapi_app.include_router(router, prefix="/api")
+    fastapi_app.include_router(router)
     container = make_async_container(Container())
     setup_dishka(container=container, app=fastapi_app)
     return fastapi_app
