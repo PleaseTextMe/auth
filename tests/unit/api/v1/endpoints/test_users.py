@@ -1,31 +1,10 @@
-from unittest.mock import AsyncMock
-
 import pytest
 from dishka import Provider, Scope, make_async_container, provide
 from dishka.integrations.fastapi import setup_dishka
 from fastapi import FastAPI
-from httpx import ASGITransport, AsyncClient
 
 from src.api.v1.router import router
-from src.domain.entities.user import User
 from src.services.user import IUserService
-
-
-@pytest.fixture
-async def mock_user_service():
-    service = AsyncMock(spec=IUserService)
-    # mock get_all
-    user1 = User(
-        id=1,
-        email="axel@harlem.hui",
-        username="testuser",
-        password_hash="hash",
-        public_bundle={"key": "val"},
-        vault={"key": "val"},
-        is_active=True,
-    )
-    service.get_all.return_value = [user1]
-    return service
 
 
 @pytest.fixture
@@ -44,14 +23,9 @@ async def test_app(mock_user_service):
     await container.close()
 
 
-@pytest.fixture
-async def test_client(test_app):
-    async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
-        yield ac
-
-
 @pytest.mark.asyncio
-async def test_get_all_users(test_client, mock_user_service):
+async def test_get_all_users(test_client, mock_user_service, valid_user):
+    mock_user_service.get_all.return_value = [valid_user]
     response = await test_client.get("/api/v1/users/")
     assert response.status_code == 200
     assert response.json() == [{"username": "testuser", "public_bundle": {"key": "val"}}]
