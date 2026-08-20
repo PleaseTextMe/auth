@@ -1,17 +1,24 @@
 import asyncio
+import os
 import subprocess
+import sys
 from typing import AsyncGenerator
 
 import httpx
 import pytest
+import redis.asyncio as aioredis
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import create_async_engine
 
+from src.core.config import settings
+from src.infrastructure.db.postgres import get_session
 from src.main import create_app
 
 
 @pytest.fixture(scope="session", autouse=True)
-def setup_docker_infrastructure(request):
+def setup_docker_infrastructure(request):  # noqa: C901
     """Start docker-compose and run migrations for tests."""
     has_integration = any(item.get_closest_marker("integration") for item in request.session.items)
     if not has_integration:
@@ -33,12 +40,8 @@ def setup_docker_infrastructure(request):
         )
 
     print("Waiting for Postgres to be ready...")
-    from sqlalchemy import text
-    from sqlalchemy.ext.asyncio import create_async_engine
 
-    engine = create_async_engine(
-        "postgresql+asyncpg://test_user:test_password@localhost:5435/please_text_me_test_db"
-    )
+    engine = create_async_engine(settings.postgres.connection_url)
 
     async def check_db():
         for _ in range(10):
@@ -54,16 +57,26 @@ def setup_docker_infrastructure(request):
     if not is_ready:
         print("Warning: Postgres did not become ready in time.")
 
-    print("Running migrations...")
-    import os
-    import sys
+    print("Waiting for Redis to be ready...")
 
+    async def check_redis():
+        redis_client = aioredis.from_url(settings.redis.url)
+        for _ in range(10):
+            try:
+                if await redis_client.ping():
+                    await redis_client.aclose()
+                    return True
+            except Exception:
+                await asyncio.sleep(1)
+        await redis_client.aclose()
+        return False
+
+    is_redis_ready = asyncio.run(check_redis())
+    if not is_redis_ready:
+        print("Warning: Redis did not become ready in time.")
+
+    print("Running migrations...")
     env = os.environ.copy()
-    env["POSTGRES_USER"] = "test_user"
-    env["POSTGRES_PASSWORD"] = "test_password"
-    env["POSTGRES_DB"] = "please_text_me_test_db"
-    env["POSTGRES_HOST"] = "localhost"
-    env["POSTGRES_PORT"] = "5435"
     subprocess.run([sys.executable, "-m", "alembic", "upgrade", "head"], check=True, env=env)
 
     yield
@@ -82,6 +95,12 @@ async def app() -> AsyncGenerator[FastAPI, None]:
     app_instance = create_app()
     async with LifespanManager(app_instance):
         yield app_instance
+
+
+@pytest.fixture
+async def db_session(app: FastAPI) -> AsyncGenerator:
+    async with get_session() as session:
+        yield session
 
 
 @pytest.fixture
