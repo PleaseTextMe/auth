@@ -1,69 +1,18 @@
-from unittest.mock import AsyncMock
-
 import pytest
 from dishka import Provider, Scope, make_async_container, provide
 from dishka.integrations.fastapi import setup_dishka
 from fastapi import FastAPI
-from httpx import ASGITransport, AsyncClient
 
 from src.api.v1.depends import get_current_session, get_current_user
 from src.api.v1.router import router
-from src.domain.entities.session import Session
-from src.domain.entities.user import User
 from src.services.session import ISessionService
 from src.services.user import IUserService
 from src.services.verify import IVerifyService
 
 
 @pytest.fixture
-async def mock_user_service():
-    service = AsyncMock(spec=IUserService)
-    return service
-
-
-@pytest.fixture
-async def mock_session_service():
-    service = AsyncMock(spec=ISessionService)
-    service.create.return_value = "mock_auth_token"
-    return service
-
-
-@pytest.fixture
-async def mock_verify_service():
-    service = AsyncMock(spec=IVerifyService)
-    service.create_email_code.return_value = "mock_verify_token"
-    return service
-
-
-@pytest.fixture
-def mock_session():
-    return Session(
-        id=1,
-        user_id=1,
-        auth_token_hash=b"hash",
-        user_agent="agent",
-        user_ip="ip",
-        device_type="web",
-        is_active=True,
-    )
-
-
-@pytest.fixture
-def mock_user():
-    return User(
-        id=1,
-        email="axel@harlem.hui",
-        username="testuser",
-        password_hash="hash",
-        public_bundle={"key": "val"},
-        vault={"key": "val"},
-        is_active=True,
-    )
-
-
-@pytest.fixture
 async def test_app(
-    mock_user_service, mock_session_service, mock_verify_service, mock_session, mock_user
+    mock_user_service, mock_session_service, mock_verify_service, valid_session, valid_user
 ):
     app = FastAPI()
     app.include_router(router, prefix="/api")
@@ -84,17 +33,11 @@ async def test_app(
     container = make_async_container(MockProvider())
     setup_dishka(container=container, app=app)
 
-    app.dependency_overrides[get_current_session] = lambda: mock_session
-    app.dependency_overrides[get_current_user] = lambda: mock_user
+    app.dependency_overrides[get_current_session] = lambda: valid_session
+    app.dependency_overrides[get_current_user] = lambda: valid_user
 
     yield app
     await container.close()
-
-
-@pytest.fixture
-async def test_client(test_app):
-    async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
-        yield ac
 
 
 @pytest.mark.asyncio
@@ -146,10 +89,10 @@ async def test_check_verify_code(test_client, mock_verify_service):
 
 
 @pytest.mark.asyncio
-async def test_logout(test_client, mock_session_service, mock_session):
+async def test_logout(test_client, mock_session_service, valid_session):
     response = await test_client.post("/api/v1/auth/logout/")
     assert response.status_code == 204
-    mock_session_service.logout.assert_called_once_with(mock_session.auth_token_hash)
+    mock_session_service.logout.assert_called_once_with(valid_session.auth_token_hash)
 
 
 @pytest.mark.asyncio
