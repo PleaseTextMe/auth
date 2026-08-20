@@ -4,6 +4,7 @@ from typing import Any, NoReturn
 from fastapi import HTTPException, Request, Response, status
 
 from src.domain.exceptions import (
+    CodeHasExpired,
     Forbidden,
     InvalidVerifyCode,
     SessionHasExpired,
@@ -11,7 +12,6 @@ from src.domain.exceptions import (
     UsernameAlreadyExists,
     UserNotFound,
     VerifyCodeNotConfirmed,
-    CodeHasExpired,
 )
 
 

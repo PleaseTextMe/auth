@@ -5,7 +5,7 @@ from dishka.integrations.fastapi import setup_dishka
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.api.v1.router import router
+from src.api.router import router
 from src.infrastructure.container import Container
 from src.infrastructure.handlers.exceptions import exception_handlers
 from src.infrastructure.lifetime import AppLifetime
@@ -29,7 +29,7 @@ def create_app() -> FastAPI:
         openapi_url="/api/openapi.json",
         exception_handlers=exception_handlers
     )
-    fastapi_app.include_router(router, prefix="/api")
+    fastapi_app.include_router(router)
     container = make_async_container(Container())
     setup_dishka(container=container, app=fastapi_app)
     return fastapi_app

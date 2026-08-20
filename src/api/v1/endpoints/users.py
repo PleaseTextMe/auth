@@ -1,5 +1,4 @@
 import logging
-from collections.abc import Sequence
 
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import APIRouter, status
