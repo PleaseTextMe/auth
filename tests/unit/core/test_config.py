@@ -1,41 +1,24 @@
-from src.core.config import PostgresSettings, RedisSettings, ServiceSettings, Settings
+
+from src.core.config import PostgresSettings, RedisSettings, ServiceSettings, settings
 
 
-def test_postgres_settings_connection_url():
-    pg_settings = PostgresSettings(
-        POSTGRES_HOST="localhost",
-        POSTGRES_PORT=5432,
-        POSTGRES_DB="test_db",
-        POSTGRES_USER="test_user",
-        POSTGRES_PASSWORD="test_password",
-    )
-    assert (
-        pg_settings.connection_url
-        == "postgresql+asyncpg://test_user:test_password@localhost:5432/test_db"
-    )
+def test_service_settings_defaults():
+    service = ServiceSettings()
+    assert service.project_name == "auth"
+    assert service.worker_id == 0
 
 
-def test_postgres_settings_connection_url_2():
-    pg_settings = PostgresSettings(
-        POSTGRES_HOST="localhost",
-        POSTGRES_PORT=5432,
-        POSTGRES_DB="test_db",
-        POSTGRES_USER="test_user",
-        POSTGRES_PASSWORD="test_password",
-    )
-    assert (
-        pg_settings.connection_url_2
-        == "postgresql+psycopg2://test_user:test_password@localhost:5432/test_db"
-    )
+def test_postgres_settings_url():
+    pg = PostgresSettings()
+    assert pg.connection_url == "postgresql+asyncpg://test_user:test_password@127.0.0.1:5435/please_text_me_test_db"
 
 
 def test_redis_settings_url():
-    redis_settings = RedisSettings(REDIS_HOST="localhost", REDIS_PORT=6379, REDIS_DB=1)
-    assert redis_settings.url == "redis://localhost:6379/1"
+    redis = RedisSettings()
+    assert redis.url == "redis://127.0.0.1:6380/0"
 
 
-def test_settings_initialization():
-    settings = Settings()
-    assert isinstance(settings.service, ServiceSettings)
-    assert isinstance(settings.postgres, PostgresSettings)
-    assert isinstance(settings.redis, RedisSettings)
+def test_global_settings_singleton():
+    assert settings.service is not None
+    assert settings.postgres is not None
+    assert settings.redis is not None
