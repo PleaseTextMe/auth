@@ -7,4 +7,3 @@ async def healthcheck():
     return {"status": "ok"}
 
 
-прочти если аксель
