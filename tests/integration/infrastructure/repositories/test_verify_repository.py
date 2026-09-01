@@ -38,7 +38,6 @@ async def test_verify_repository_set_and_get(repo: RedisVerifyRepository):
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_verify_repository_update_field(repo: RedisVerifyRepository):
-
     key = "animan_json"
     initial_value = {"email": "axel@harlem.hui", "verified": False}
 
