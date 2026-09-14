@@ -1,43 +1,4 @@
 import pytest
-from dishka import Provider, Scope, make_async_container, provide
-from dishka.integrations.fastapi import setup_dishka
-from fastapi import FastAPI
-
-from src.api.v1.depends import get_current_session, get_current_user
-from src.api.v1.router import router
-from src.services.session import ISessionService
-from src.services.user import IUserService
-from src.services.verify import IVerifyService
-
-
-@pytest.fixture
-async def test_app(
-    mock_user_service, mock_session_service, mock_verify_service, valid_session, valid_user
-):
-    app = FastAPI()
-    app.include_router(router, prefix="/api")
-
-    class MockProvider(Provider):
-        @provide(scope=Scope.APP)
-        def get_user_service(self) -> IUserService:
-            return mock_user_service
-
-        @provide(scope=Scope.APP)
-        def get_session_service(self) -> ISessionService:
-            return mock_session_service
-
-        @provide(scope=Scope.APP)
-        def get_verify_service(self) -> IVerifyService:
-            return mock_verify_service
-
-    container = make_async_container(MockProvider())
-    setup_dishka(container=container, app=app)
-
-    app.dependency_overrides[get_current_session] = lambda: valid_session
-    app.dependency_overrides[get_current_user] = lambda: valid_user
-
-    yield app
-    await container.close()
 
 
 @pytest.mark.asyncio
