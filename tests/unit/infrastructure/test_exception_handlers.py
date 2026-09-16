@@ -1,7 +1,5 @@
-from unittest.mock import AsyncMock
-
 import pytest
-from fastapi import HTTPException, Request
+from fastapi import HTTPException
 
 from src.domain.exceptions import (
     UserEmailAlreadyExists,
@@ -10,11 +8,6 @@ from src.domain.exceptions import (
     VerifyCodeNotConfirmed,
 )
 from src.infrastructure.handlers.exceptions import exception_handlers
-
-
-@pytest.fixture
-def mock_request():
-    return AsyncMock(spec=Request)
 
 
 @pytest.mark.asyncio
