@@ -1,4 +1,3 @@
-
 from src.core.config import PostgresSettings, RedisSettings, ServiceSettings, settings
 
 
