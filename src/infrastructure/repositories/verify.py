@@ -27,7 +27,7 @@ class RedisVerifyRepository(IVerifyRepository):
                 exp_seconds = int(timedelta(minutes=exp).total_seconds())
             else:
                 exp_seconds = int(exp.total_seconds())
-                
+
             await self._redis.set(name=self._make_key(key), value=value, ex=exp_seconds)
         else:
             await self._redis.set(name=self._make_key(key), value=value)
@@ -36,21 +36,21 @@ class RedisVerifyRepository(IVerifyRepository):
         await self._redis.delete(self._make_key(key))
 
     async def update_field(
-        self, 
-        key: str, 
-        field: str, 
-        value: Any, 
+        self,
+        key: str,
+        field: str,
+        value: Any,
         new_exp: timedelta | int | None = None
     ) -> None:
         full_key = self._make_key(key)
         raw_data = await self._redis.get(full_key)
-        
+
         if not raw_data:
-            return  
+            return
 
         data = json.loads(raw_data.decode("utf-8"))
         data[field] = value
-        
+
         if new_exp is not None:
             if isinstance(new_exp, int):
                 ttl = int(timedelta(minutes=new_exp).total_seconds())
@@ -58,8 +58,8 @@ class RedisVerifyRepository(IVerifyRepository):
                 ttl = int(new_exp.total_seconds())
         else:
             ttl = await self._redis.ttl(full_key)
-        
+
         if ttl > 0:
             await self._redis.set(full_key, json.dumps(data), ex=ttl)
-        else: 
+        else:
             await self._redis.set(full_key, json.dumps(data))

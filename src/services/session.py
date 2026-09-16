@@ -1,12 +1,9 @@
 import logging
 import secrets
 from abc import ABC, abstractmethod
-from collections.abc import Iterable
-from uuid import UUID
 
 from argon2.exceptions import VerifyMismatchError
 
-from src.core.config import settings
 from src.core.utils.hash import hash_token, password_hasher
 from src.domain.dtos.session import SessionCreateDTO
 from src.domain.entities.session import Session
@@ -41,7 +38,7 @@ class SessionService(ISessionService):
                 hash_str = user.password_hash.decode("utf-8")
                 password_hasher.verify(hash_str, session_data.password)
             except VerifyMismatchError:
-                raise UserNotFound()
+                raise UserNotFound() from None
 
             auth_token = secrets.token_hex(32)
             session_data = Session.create(

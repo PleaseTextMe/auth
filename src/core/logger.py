@@ -1,3 +1,7 @@
+import os
+
+os.makedirs("logs", exist_ok=True)
+
 LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 LOG_DEFAULT_HANDLERS = ["console", "all_logs", "file_warning"]
 
