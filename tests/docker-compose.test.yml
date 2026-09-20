@@ -4,18 +4,18 @@ services:
   postgres:
     image: postgres:15-alpine
     container_name: please_text_me_postgres_test
+    env_file:
+      - ../.env.test
     ports:
-      - "5435:5432" # Use a different port to avoid conflicts with local dev DB
-    environment:
-      POSTGRES_USER: test_user
-      POSTGRES_PASSWORD: test_password
-      POSTGRES_DB: please_text_me_test_db
+      - "${POSTGRES_PORT:-5435}:5432" # Use port from .env.test to avoid conflicts with local dev DB
     restart: unless-stopped
 
   redis:
     image: redis:7-alpine
     container_name: please_text_me_redis_test
+    env_file:
+      - ../.env.test
     ports:
-      - "6380:6379" # Use a different port to avoid conflicts with local dev Redis
+      - "${REDIS_PORT:-6380}:6379" # Use port from .env.test to avoid conflicts with local dev Redis
     restart: unless-stopped
     command: redis-server --appendonly yes
