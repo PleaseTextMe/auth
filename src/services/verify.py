@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 
 from pydantic import EmailStr
 
+from src.core.metrics import AUTH_CODES_GENERATED, AUTH_EMAIL_VERIFICATIONS
 from src.domain.dtos.verify import VerifyCodeDTO
 from src.domain.exceptions import (
     CodeHasExpired,
@@ -47,6 +48,7 @@ class VerifyService(IVerifyService):
                 exp=5
             )
 
+            AUTH_CODES_GENERATED.inc()
             return verify_token
 
     async def verify_email_code(self, verify_data: VerifyCodeDTO):
@@ -54,12 +56,14 @@ class VerifyService(IVerifyService):
             if await uow.user_repository.get_by_email(
                 user_email=verify_data.email
             ):
+                AUTH_EMAIL_VERIFICATIONS.labels(status="failed").inc()
                 raise UserEmailAlreadyExists()
 
             raw_redis_data = await uow.verify_repository.get_value(
                 verify_data.verify_token
             )
             if not raw_redis_data:
+                AUTH_EMAIL_VERIFICATIONS.labels(status="failed").inc()
                 raise CodeHasExpired()
 
             redis_data = json.loads(raw_redis_data)
@@ -67,6 +71,7 @@ class VerifyService(IVerifyService):
                 redis_data["email"] == verify_data.email
                 and redis_data["code"] == verify_data.code
             ):
+                AUTH_EMAIL_VERIFICATIONS.labels(status="failed").inc()
                 raise InvalidVerifyCode()
 
             await uow.verify_repository.update_field(
@@ -75,3 +80,4 @@ class VerifyService(IVerifyService):
                 value="verified",
                 new_exp=24 * 60
             )
+            AUTH_EMAIL_VERIFICATIONS.labels(status="success").inc()

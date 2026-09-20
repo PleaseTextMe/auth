@@ -2,6 +2,7 @@ import json
 import logging
 from abc import ABC, abstractmethod
 
+from src.core.metrics import AUTH_REGISTRATIONS
 from src.core.utils.hash import password_hasher
 from src.domain.dtos.user import (
     UserCreateDatabaseDTO,
@@ -36,6 +37,7 @@ class UserService(IUserService):
             if await uow.user_repository.get_by_email(
                 user_email=user_data.email
             ):
+                AUTH_REGISTRATIONS.labels(status="failed").inc()
                 raise UserEmailAlreadyExists()
 
             redis_data = await uow.verify_repository.get_value(
@@ -46,6 +48,7 @@ class UserService(IUserService):
                 not redis_data or
                 json.loads(redis_data)["status"] != "verified"
             ):
+                AUTH_REGISTRATIONS.labels(status="failed").inc()
                 raise VerifyCodeNotConfirmed()
 
             await uow.verify_repository.delete_value(user_data.verify_token)
@@ -53,6 +56,7 @@ class UserService(IUserService):
             if await uow.user_repository.get_by_username(
                 username=user_data.username
             ):
+                AUTH_REGISTRATIONS.labels(status="failed").inc()
                 raise UsernameAlreadyExists()
 
             hashed_password = password_hasher.hash(user_data.password).encode("utf-8")
@@ -61,7 +65,9 @@ class UserService(IUserService):
                 password_hash=hashed_password,
                 **user_dict
             )
-            return await uow.user_repository.create(user_data)
+            user = await uow.user_repository.create(user_data)
+            AUTH_REGISTRATIONS.labels(status="success").inc()
+            return user
 
     async def get_all(self) -> list[User]:
         async with self._uow as uow:

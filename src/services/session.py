@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 
 from argon2.exceptions import VerifyMismatchError
 
+from src.core.metrics import AUTH_LOGIN_ATTEMPTS
 from src.core.utils.hash import hash_token, password_hasher
 from src.domain.dtos.session import SessionCreateDTO
 from src.domain.entities.session import Session
@@ -32,13 +33,17 @@ class SessionService(ISessionService):
                 user_email=session_data.email
             )
             if not user:
+                AUTH_LOGIN_ATTEMPTS.labels(status="failed").inc()
                 raise UserNotFound()
 
             try:
                 hash_str = user.password_hash.decode("utf-8")
                 password_hasher.verify(hash_str, session_data.password)
             except VerifyMismatchError:
+                AUTH_LOGIN_ATTEMPTS.labels(status="failed").inc()
                 raise UserNotFound() from None
+
+            AUTH_LOGIN_ATTEMPTS.labels(status="success").inc()
 
             auth_token = secrets.token_hex(32)
             session_data = Session.create(
