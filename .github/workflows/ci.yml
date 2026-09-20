@@ -13,8 +13,8 @@ on:
       - 'README.md'
 
 jobs:
-  test-and-lint:
-    name: Run Linter and Pytest
+  lint:
+    name: Run Linter
     runs-on: ubuntu-latest
 
     steps:
@@ -34,6 +34,26 @@ jobs:
 
       - name: Run Ruff (Linting)
         run: ruff check src tests
+
+  test:
+    name: Run Pytest
+    needs: lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11" # Target python version, replace with 3.14 when widely supported
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
 
       - name: Run Pytest (Unit & Integration)
         run: |
