@@ -12,13 +12,6 @@ asyncio_mode = "auto"
 markers = [
     "integration: marks tests as integration tests (deselect with '-m \"not integration\"')",
 ]
-env = [
-    "POSTGRES_PORT=5435",
-    "POSTGRES_PASSWORD=test_password",
-    "POSTGRES_DB=please_text_me_test_db",
-    "POSTGRES_USER=test_user",
-    "REDIS_PORT=6380",
-]
 filterwarnings = [
     "ignore::DeprecationWarning",
 ]
