@@ -11,7 +11,7 @@ logging_config.dictConfig(LOGGING)
 
 class ModelConfig(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=(".env"),
+        env_file=(".env", ".env.test"),
         env_file_encoding="utf-8",
         extra="ignore",
     )

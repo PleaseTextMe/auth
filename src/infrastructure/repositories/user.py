@@ -1,7 +1,7 @@
 import logging
 
 from pydantic import EmailStr
-from sqlalchemy import Result, insert, select, update
+from sqlalchemy import Result, insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.domain.dtos.user import (

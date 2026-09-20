@@ -1,7 +1,6 @@
 from sqlalchemy import (
     BIGINT,
     BOOLEAN,
-    UUID,
     Column,
     ForeignKey,
     LargeBinary,
