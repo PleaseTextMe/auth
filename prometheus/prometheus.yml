@@ -1,0 +1,14 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'auth_microservice'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['auth_app:8000']
+
+  - job_name: 'sending_microservice'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['please_text_me_sending:8001']
