@@ -4,7 +4,6 @@ from dishka import make_async_container
 from dishka.integrations.fastapi import setup_dishka
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
 from prometheus_fastapi_instrumentator import Instrumentator
 
 from src.api.router import router
