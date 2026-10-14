@@ -6,3 +6,4 @@ httpx==0.28.1
 ruff==0.4.8
 testcontainers==4.7.2
 asgi-lifespan==2.1.0
+fakeredis[lua]>=2.23,<3
