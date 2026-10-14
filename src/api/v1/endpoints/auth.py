@@ -8,6 +8,7 @@ from src.api.v1.schemas.auth import (
     CheckCodeForm,
     CheckVerifyCodeResponse,
     LoginForm,
+    LoginParametersForm,
     LoginResponse,
     RegisterForm,
     SendCodeForm,
@@ -29,6 +30,14 @@ router = APIRouter(
 )
 
 
+@router.post("/login-parameters/")
+async def login_parameters(
+    form: LoginParametersForm,
+    user_service: FromDishka[IUserService],
+) -> dict:
+    return {"auth_version": await user_service.get_auth_version(str(form.email))}
+
+
 @router.post(
     "/register/",
     summary="Регистрация нового пользователя.",
@@ -47,8 +56,8 @@ async def register(
     auth_token = await session_service.create(
         SessionCreateDTO(
             **register_form.model_dump(),
-            user_agent=request.headers["user-agent"],
-            user_ip=request.headers["host"],
+            user_agent=request.headers.get("user-agent", "unknown"),
+            user_ip=request.client.host if request.client else None,
         )
     )
     return LoginResponse(auth_token=auth_token)
@@ -67,8 +76,8 @@ async def login(
     auth_token = await session_service.create(
         SessionCreateDTO(
             **login_form.model_dump(),
-            user_agent=request.headers["user-agent"],
-            user_ip=request.headers["host"],
+            user_agent=request.headers.get("user-agent", "unknown"),
+            user_ip=request.client.host if request.client else None,
         )
     )
     return LoginResponse(auth_token=auth_token)
