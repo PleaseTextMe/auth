@@ -12,7 +12,7 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 
-config.set_main_option("sqlalchemy.url", settings.postgres.connection_url_2)
+config.set_main_option("sqlalchemy.url", settings.postgres.connection_url_2.replace("%", "%%"))
 
 
 target_metadata = mapper_registry.metadata
