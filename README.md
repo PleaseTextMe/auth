@@ -86,3 +86,20 @@ The project follows Clean/DDD Architecture using:
 - **Dishka** for Dependency Injection.
 - **SQLAlchemy** with imperative mapping.
 - **Alembic** for migrations.
+
+## Verification and client compatibility
+
+Set `SMTP_HOST`, `SMTP_PORT`, `SMTP_FROM`, and, if needed, `SMTP_USERNAME` and
+`SMTP_PASSWORD` in `.env`. STARTTLS is enabled by default (`SMTP_STARTTLS=true`).
+Verification uses random six-digit codes valid for five minutes, with at most five
+incorrect attempts per token. Missing or unavailable mail delivery returns HTTP 503.
+No verification emails are sent by the test suite.
+
+Deploy the auth service and React client together. The client calls
+`POST /api/v1/auth/login-parameters/` before login. New accounts use derived login
+credentials and randomly salted vaults. Legacy accounts retain their existing
+password protocol and vault format; they are not automatically migrated.
+
+Production reads `.env` only. Tests explicitly select `.env.test` through
+`ENV_FILE`; running the application no longer silently loads test database settings.
+Console logs work by default; set `LOG_DIR` to enable file logs in a writable directory.
