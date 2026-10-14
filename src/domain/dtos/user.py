@@ -10,6 +10,8 @@ class VaultDTO(BaseModel):
     encrypted_payload: str
     nonce: str
     auth_tag: str
+    kdf_salt: str | None = None
+    auth_version: int = 1
 
 
 class UserCreateDTO(BaseModel):
