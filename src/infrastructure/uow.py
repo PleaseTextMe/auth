@@ -27,11 +27,16 @@ class DatabaseUnitOfWork(IUnitOfWork):
         return self
 
     async def __aexit__(self, exc_type, exc_value, traceback) -> None:
-        if exc_type is not None:
-            await self.session.rollback()
-        else:
-            await self.session.commit()
-        if self.session.is_active:
+        try:
+            if exc_type is not None:
+                await self.session.rollback()
+            else:
+                try:
+                    await self.session.commit()
+                except Exception:
+                    await self.session.rollback()
+                    raise
+        finally:
             await self.session.close()
 
     async def commit(self) -> None:
