@@ -4,6 +4,9 @@ import subprocess
 import sys
 from typing import AsyncGenerator
 
+# Test configuration is opt-in here, never loaded by production settings.
+os.environ["ENV_FILE"] = ".env.test"
+
 import httpx
 import pytest
 import redis.asyncio as aioredis
