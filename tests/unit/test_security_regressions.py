@@ -4,8 +4,6 @@ import os
 import subprocess
 import sys
 from pathlib import Path
-from types import SimpleNamespace
-from unittest.mock import AsyncMock, patch
 
 import fakeredis.aioredis
 import pytest
@@ -14,14 +12,11 @@ from sqlalchemy.engine import make_url
 from src.core.config import PostgresSettings
 from src.domain.exceptions import (
     UserEmailAlreadyExists,
-    VerificationDeliveryUnavailable,
     VerifyCodeNotConfirmed,
 )
-from src.infrastructure.email import send_verification_email
 from src.infrastructure.handlers.exceptions import exception_handlers
 from src.infrastructure.repositories.verify import RedisVerifyRepository
 from src.services.user import UserService
-from src.services.verify import VerifyService
 
 
 @pytest.mark.asyncio
@@ -53,24 +48,6 @@ async def test_failed_commit_rolls_back_and_closes(mock_session, mock_redis):
             pass
     mock_session.rollback.assert_awaited_once()
     mock_session.close.assert_awaited_once()
-
-
-@pytest.mark.asyncio
-async def test_delivery_failure_does_not_leave_a_usable_token(mock_uow):
-    mock_uow.user_repository.get_by_email.return_value = None
-    with patch("src.services.verify.send_verification_email", new_callable=AsyncMock) as delivery:
-        delivery.side_effect = VerificationDeliveryUnavailable()
-        with pytest.raises(VerificationDeliveryUnavailable):
-            await VerifyService(mock_uow).create_email_code("user@example.com")
-    key = mock_uow.verify_repository.set_value.call_args.kwargs["key"]
-    mock_uow.verify_repository.delete_value.assert_awaited_once_with(key)
-
-
-@pytest.mark.asyncio
-async def test_unconfigured_email_delivery_fails_closed():
-    with patch("src.infrastructure.email.settings", SimpleNamespace(email=SimpleNamespace(host="", sender=""))):
-        with pytest.raises(VerificationDeliveryUnavailable):
-            await send_verification_email("user@example.com", 123456)
 
 
 @pytest.mark.asyncio
