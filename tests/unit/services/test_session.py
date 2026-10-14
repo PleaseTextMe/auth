@@ -84,3 +84,12 @@ async def test_logout_success(session_service, mock_uow):
     await session_service.logout(auth_token_hash)
 
     mock_uow.session_repository.deactivate_token.assert_called_once_with(auth_token_hash)
+
+
+@pytest.mark.asyncio
+async def test_disabled_account_cannot_create_session(session_service, mock_uow, session_data, user_mock):
+    user_mock.is_active = False
+    mock_uow.user_repository.get_by_email.return_value = user_mock
+    with pytest.raises(UserNotFound):
+        await session_service.create(session_data)
+    mock_uow.session_repository.create.assert_not_awaited()
