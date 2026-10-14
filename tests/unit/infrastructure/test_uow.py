@@ -40,7 +40,7 @@ async def test_uow_aexit_not_active(uow, mock_session):
     mock_session.is_active = False
     await uow.__aexit__(None, None, None)
     mock_session.commit.assert_called_once()
-    mock_session.close.assert_not_called()
+    mock_session.close.assert_called_once()
 
 
 @pytest.mark.asyncio
