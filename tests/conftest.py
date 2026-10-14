@@ -4,9 +4,6 @@ import subprocess
 import sys
 from typing import AsyncGenerator
 
-# Test configuration is opt-in here, never loaded by production settings.
-os.environ["ENV_FILE"] = ".env.test"
-
 import httpx
 import pytest
 import redis.asyncio as aioredis
@@ -15,9 +12,13 @@ from fastapi import FastAPI
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
 
-from src.core.config import settings
-from src.infrastructure.db.postgres import get_session
-from src.main import create_app
+# Select test settings before importing application modules that initialize them.
+# Ruff 0.4.8 requires explicit E402 exceptions for this environment setup.
+os.environ["ENV_FILE"] = ".env.test"
+
+from src.core.config import settings  # noqa: E402
+from src.infrastructure.db.postgres import get_session  # noqa: E402
+from src.main import create_app  # noqa: E402
 
 
 @pytest.fixture(scope="session", autouse=True)
