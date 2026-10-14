@@ -1,8 +1,10 @@
+import os
 from logging import config as logging_config
 from pathlib import Path
 
 from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from sqlalchemy import URL
 
 from src.core.logger import LOGGING
 
@@ -11,7 +13,7 @@ logging_config.dictConfig(LOGGING)
 
 class ModelConfig(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=(".env", ".env.test"),
+        env_file=os.environ.get("ENV_FILE", ".env"),
         env_file_encoding="utf-8",
         extra="ignore",
     )
@@ -34,13 +36,15 @@ class PostgresSettings(ModelConfig):
 
     @property
     def connection_url(self) -> str:
-        pwd = self.password.get_secret_value()
-        return f"postgresql+asyncpg://{self.user}:{pwd}@{self.host}:{self.port}/{self.db_name}"
+        return URL.create("postgresql+asyncpg", username=self.user,
+                          password=self.password.get_secret_value(), host=self.host,
+                          port=self.port, database=self.db_name).render_as_string(hide_password=False)
 
     @property
     def connection_url_2(self) -> str:
-        pwd = self.password.get_secret_value()
-        return f"postgresql+psycopg2://{self.user}:{pwd}@{self.host}:{self.port}/{self.db_name}"
+        return URL.create("postgresql+psycopg2", username=self.user,
+                          password=self.password.get_secret_value(), host=self.host,
+                          port=self.port, database=self.db_name).render_as_string(hide_password=False)
 
 
 class RedisSettings(ModelConfig):
@@ -53,10 +57,20 @@ class RedisSettings(ModelConfig):
         return f"redis://{self.host}:{self.port}/{self.db}"
 
 
+class EmailSettings(ModelConfig):
+    host: str = Field(default="", validation_alias="SMTP_HOST")
+    port: int = Field(default=587, validation_alias="SMTP_PORT")
+    username: str = Field(default="", validation_alias="SMTP_USERNAME")
+    password: SecretStr = Field(default="", validation_alias="SMTP_PASSWORD")
+    sender: str = Field(default="", validation_alias="SMTP_FROM")
+    starttls: bool = Field(default=True, validation_alias="SMTP_STARTTLS")
+
+
 class Settings(BaseSettings):
     service: ServiceSettings = ServiceSettings()
     postgres: PostgresSettings = PostgresSettings()
     redis: RedisSettings = RedisSettings()
+    email: EmailSettings = EmailSettings()
 
 
 settings = Settings()
