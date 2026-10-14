@@ -12,7 +12,6 @@ from src.domain.exceptions import (
     UserEmailAlreadyExists,
     UsernameAlreadyExists,
     UserNotFound,
-    VerificationDeliveryUnavailable,
     VerifyCodeNotConfirmed,
 )
 
@@ -36,10 +35,6 @@ exception_handlers: dict[
     type[Exception],
     Callable[[Request, Any],Coroutine[Any, Any, Response]]
 ] = {
-    VerificationDeliveryUnavailable: create_exception_handler(
-        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-        detail="Email verification delivery is unavailable."
-    ),
     Forbidden: create_exception_handler(
         status_code=status.HTTP_403_FORBIDDEN,
         detail="Недостаточно прав для выполнения операции."
