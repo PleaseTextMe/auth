@@ -6,6 +6,9 @@ from typing import Any
 class IVerifyRepository(abc.ABC):
 
     @abc.abstractmethod
+    async def verify_code(self, key: str, email: str, code: int) -> int: ...
+
+    @abc.abstractmethod
     async def get_value(self, key: str) -> str | None: ...
 
     @abc.abstractmethod
