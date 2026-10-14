@@ -89,11 +89,9 @@ The project follows Clean/DDD Architecture using:
 
 ## Verification and client compatibility
 
-Set `SMTP_HOST`, `SMTP_PORT`, `SMTP_FROM`, and, if needed, `SMTP_USERNAME` and
-`SMTP_PASSWORD` in `.env`. STARTTLS is enabled by default (`SMTP_STARTTLS=true`).
-Verification uses random six-digit codes valid for five minutes, with at most five
-incorrect attempts per token. Missing or unavailable mail delivery returns HTTP 503.
-No verification emails are sent by the test suite.
+Email verification currently uses the fixed development code `666666`.
+No email is sent and no SMTP configuration is required. Tokens remain valid for
+five minutes, with at most five incorrect attempts per token.
 
 Deploy the auth service and React client together. The client calls
 `POST /api/v1/auth/login-parameters/` before login. New accounts use derived login
