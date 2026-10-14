@@ -1,7 +1,8 @@
 from collections.abc import Callable, Coroutine
-from typing import Any, NoReturn
+from typing import Any
 
-from fastapi import HTTPException, Request, Response, status
+from fastapi import Request, Response, status
+from fastapi.responses import JSONResponse
 
 from src.domain.exceptions import (
     CodeHasExpired,
@@ -11,6 +12,7 @@ from src.domain.exceptions import (
     UserEmailAlreadyExists,
     UsernameAlreadyExists,
     UserNotFound,
+    VerificationDeliveryUnavailable,
     VerifyCodeNotConfirmed,
 )
 
@@ -25,8 +27,8 @@ def create_exception_handler(
     :param detail: текст ошибки
     :return: HTTPException
     """
-    async def handler(request: Request, exc: Exception) -> NoReturn:
-        raise HTTPException(status_code=status_code, detail=detail)
+    async def handler(request: Request, exc: Exception) -> Response:
+        return JSONResponse(status_code=status_code, content={"detail": detail})
 
     return handler
 
@@ -34,6 +36,10 @@ exception_handlers: dict[
     type[Exception],
     Callable[[Request, Any],Coroutine[Any, Any, Response]]
 ] = {
+    VerificationDeliveryUnavailable: create_exception_handler(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        detail="Email verification delivery is unavailable."
+    ),
     Forbidden: create_exception_handler(
         status_code=status.HTTP_403_FORBIDDEN,
         detail="Недостаточно прав для выполнения операции."
