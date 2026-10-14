@@ -12,6 +12,7 @@ from src.domain.exceptions import (
     InvalidVerifyCode,
     UserEmailAlreadyExists,
 )
+from src.infrastructure.email import send_verification_email
 from src.services.interfaces.uow import IUnitOfWork
 
 logger = logging.getLogger(__name__)
@@ -32,8 +33,9 @@ class VerifyService(IVerifyService):
 
     async def create_email_code(self, user_email: EmailStr) -> str | None:
         async with self._uow as uow:
-            # verification_code = int(f"{secrets.randbelow(1000000):06d}")  TODO: Restore this
-            verification_code = 666_666
+            if await uow.user_repository.get_by_email(user_email=user_email):
+                raise UserEmailAlreadyExists()
+            verification_code = 100_000 + secrets.randbelow(900_000)
             verify_token = secrets.token_urlsafe(32)
 
             redis_data = {
@@ -47,6 +49,11 @@ class VerifyService(IVerifyService):
                 value=json.dumps(redis_data),
                 exp=5
             )
+            try:
+                await send_verification_email(user_email, verification_code)
+            except Exception:
+                await uow.verify_repository.delete_value(verify_token)
+                raise
 
             AUTH_CODES_GENERATED.inc()
             return verify_token
@@ -59,25 +66,15 @@ class VerifyService(IVerifyService):
                 AUTH_EMAIL_VERIFICATIONS.labels(status="failed").inc()
                 raise UserEmailAlreadyExists()
 
-            raw_redis_data = await uow.verify_repository.get_value(
-                verify_data.verify_token
+            result = await uow.verify_repository.verify_code(
+                verify_data.verify_token, str(verify_data.email), verify_data.code
             )
-            if not raw_redis_data:
+            if result == -1:
                 AUTH_EMAIL_VERIFICATIONS.labels(status="failed").inc()
                 raise CodeHasExpired()
 
-            redis_data = json.loads(raw_redis_data)
-            if not(
-                redis_data["email"] == verify_data.email
-                and redis_data["code"] == verify_data.code
-            ):
+            if result != 1:
                 AUTH_EMAIL_VERIFICATIONS.labels(status="failed").inc()
                 raise InvalidVerifyCode()
 
-            await uow.verify_repository.update_field(
-                key=verify_data.verify_token,
-                field="status",
-                value="verified",
-                new_exp=24 * 60
-            )
             AUTH_EMAIL_VERIFICATIONS.labels(status="success").inc()
