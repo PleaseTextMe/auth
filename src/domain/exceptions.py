@@ -5,11 +5,6 @@ class DomainException(Exception):
         return "Произошла неизвестная ошибка"
 
 
-class VerificationDeliveryUnavailable(DomainException):
-    @property
-    def message(self) -> str:
-        return "Email verification delivery is unavailable"
-
 class Forbidden(DomainException):
     @property
     def message(self) -> str:
