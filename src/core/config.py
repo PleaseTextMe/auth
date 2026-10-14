@@ -57,20 +57,10 @@ class RedisSettings(ModelConfig):
         return f"redis://{self.host}:{self.port}/{self.db}"
 
 
-class EmailSettings(ModelConfig):
-    host: str = Field(default="", validation_alias="SMTP_HOST")
-    port: int = Field(default=587, validation_alias="SMTP_PORT")
-    username: str = Field(default="", validation_alias="SMTP_USERNAME")
-    password: SecretStr = Field(default="", validation_alias="SMTP_PASSWORD")
-    sender: str = Field(default="", validation_alias="SMTP_FROM")
-    starttls: bool = Field(default=True, validation_alias="SMTP_STARTTLS")
-
-
 class Settings(BaseSettings):
     service: ServiceSettings = ServiceSettings()
     postgres: PostgresSettings = PostgresSettings()
     redis: RedisSettings = RedisSettings()
-    email: EmailSettings = EmailSettings()
 
 
 settings = Settings()
