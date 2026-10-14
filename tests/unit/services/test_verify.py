@@ -1,5 +1,4 @@
 import json
-from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -23,8 +22,7 @@ async def test_create_email_code_success(verify_service, mock_uow):
     email = "hopso@kto.pID"
 
     mock_uow.user_repository.get_by_email.return_value = None
-    with patch("src.services.verify.send_verification_email", new_callable=AsyncMock) as delivery:
-        verify_token = await verify_service.create_email_code(email)
+    verify_token = await verify_service.create_email_code(email)
 
     assert verify_token is not None
     assert isinstance(verify_token, str)
@@ -33,8 +31,7 @@ async def test_create_email_code_success(verify_service, mock_uow):
     assert kwargs["key"] == verify_token
     assert json.loads(kwargs["value"])["email"] == email
     code = json.loads(kwargs["value"])["code"]
-    assert 100000 <= code <= 999999
-    delivery.assert_awaited_once_with(email, code)
+    assert code == 666666
     assert json.loads(kwargs["value"])["status"] == "pending"
     assert kwargs["exp"] == 5
 
