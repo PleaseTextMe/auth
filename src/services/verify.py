@@ -12,7 +12,6 @@ from src.domain.exceptions import (
     InvalidVerifyCode,
     UserEmailAlreadyExists,
 )
-from src.infrastructure.email import send_verification_email
 from src.services.interfaces.uow import IUnitOfWork
 
 logger = logging.getLogger(__name__)
@@ -35,7 +34,8 @@ class VerifyService(IVerifyService):
         async with self._uow as uow:
             if await uow.user_repository.get_by_email(user_email=user_email):
                 raise UserEmailAlreadyExists()
-            verification_code = 100_000 + secrets.randbelow(900_000)
+            # Development mock: no email is sent.
+            verification_code = 666_666
             verify_token = secrets.token_urlsafe(32)
 
             redis_data = {
@@ -49,11 +49,6 @@ class VerifyService(IVerifyService):
                 value=json.dumps(redis_data),
                 exp=5
             )
-            try:
-                await send_verification_email(user_email, verification_code)
-            except Exception:
-                await uow.verify_repository.delete_value(verify_token)
-                raise
 
             AUTH_CODES_GENERATED.inc()
             return verify_token
