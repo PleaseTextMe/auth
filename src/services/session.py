@@ -32,7 +32,7 @@ class SessionService(ISessionService):
             user = await uow.user_repository.get_by_email(
                 user_email=session_data.email
             )
-            if not user:
+            if not user or not user.is_active:
                 AUTH_LOGIN_ATTEMPTS.labels(status="failed").inc()
                 raise UserNotFound()
 
