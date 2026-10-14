@@ -30,67 +30,71 @@ def setup_docker_infrastructure(request):  # noqa: C901
         return
 
     compose_file = "tests/docker-compose.test.yml"
-    print("\nStarting test infrastructure...")
+    compose_command = ["docker", "compose", "--env-file", ".env.test", "-f", compose_file]
+    compose_started = False
     try:
-        subprocess.run(
-            ["docker", "compose", "-f", compose_file, "up", "-d"],
-            check=True,
-            capture_output=True,
-            text=True,
-        )
-    except subprocess.CalledProcessError as e:
-        print(
-            f"\nWarning: Failed to auto-start docker infrastructure. Error:\n{e.stderr}\nMake sure to run 'sudo docker compose -f {compose_file} up -d' manually before running tests."
-        )
+        print("\nStarting test infrastructure...")
+        try:
+            subprocess.run(
+                [*compose_command, "up", "-d"],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            compose_started = True
+        except subprocess.CalledProcessError as e:
+            print(
+                f"\nWarning: Failed to auto-start docker infrastructure. Error:\n{e.stderr}\nMake sure to run 'sudo docker compose --env-file .env.test -f {compose_file} up -d' manually before running tests."
+            )
 
-    print("Waiting for Postgres to be ready...")
+        print("Waiting for Postgres to be ready...")
 
-    engine = create_async_engine(settings.postgres.connection_url)
-
-    async def check_db():
-        for _ in range(10):
+        async def check_db():
+            engine = create_async_engine(settings.postgres.connection_url)
             try:
-                async with engine.connect() as conn:
-                    await conn.execute(text("SELECT 1"))
-                    return True
-            except Exception:
-                await asyncio.sleep(1)
-        return False
+                for _ in range(10):
+                    try:
+                        async with engine.connect() as conn:
+                            await conn.execute(text("SELECT 1"))
+                            return True
+                    except Exception:
+                        await asyncio.sleep(1)
+                return False
+            finally:
+                await engine.dispose()
 
-    is_ready = asyncio.run(check_db())
-    if not is_ready:
-        print("Warning: Postgres did not become ready in time.")
+        if not asyncio.run(check_db()):
+            raise RuntimeError("Test Postgres did not become ready in time; migrations were not run.")
 
-    print("Waiting for Redis to be ready...")
+        print("Waiting for Redis to be ready...")
 
-    async def check_redis():
-        redis_client = aioredis.from_url(settings.redis.url)
-        for _ in range(10):
+        async def check_redis():
+            redis_client = aioredis.from_url(settings.redis.url)
             try:
-                if await redis_client.ping():
-                    await redis_client.aclose()
-                    return True
-            except Exception:
-                await asyncio.sleep(1)
-        await redis_client.aclose()
-        return False
+                for _ in range(10):
+                    try:
+                        if await redis_client.ping():
+                            return True
+                    except Exception:
+                        await asyncio.sleep(1)
+                return False
+            finally:
+                await redis_client.aclose()
 
-    is_redis_ready = asyncio.run(check_redis())
-    if not is_redis_ready:
-        print("Warning: Redis did not become ready in time.")
+        if not asyncio.run(check_redis()):
+            raise RuntimeError("Test Redis did not become ready in time; migrations were not run.")
 
-    print("Running migrations...")
-    env = os.environ.copy()
-    subprocess.run([sys.executable, "-m", "alembic", "upgrade", "head"], check=True, env=env)
+        print("Running migrations...")
+        env = os.environ.copy()
+        subprocess.run([sys.executable, "-m", "alembic", "upgrade", "head"], check=True, env=env)
 
-    yield
-
-    try:
-        subprocess.run(
-            ["docker", "compose", "-f", compose_file, "down"], check=True, capture_output=True
-        )
-    except subprocess.CalledProcessError:
-        print("\nWarning: Failed to auto-stop docker infrastructure.")
+        yield
+    finally:
+        if compose_started:
+            try:
+                subprocess.run([*compose_command, "down"], check=True, capture_output=True)
+            except subprocess.CalledProcessError:
+                print("\nWarning: Failed to auto-stop docker infrastructure.")
 
 
 @pytest.fixture
